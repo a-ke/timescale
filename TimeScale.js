@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-17 10:42:47
+ * @Last Modified time: 2018-11-17 15:00:02
  */
 ;(function() {
   var ready = {
@@ -138,6 +138,13 @@
     iconColor = that.config.fontColor || iconColor;
     cursorColor = that.config.cursorColor || cursorColor;
 
+    //konva全局变量
+    this.konva = {
+      stage: null, // 舞台
+      layer: null, //动态图层
+      staticLayer: null, // 静态图层
+      clipGroup: null //剪辑片段分组
+    }
     //事件队列(key为事件名，value为数组，数组内存放事件的回调函数)
     that.eventListObj = {};
 
@@ -558,51 +565,86 @@
   Class.prototype.drawClipBlock = function(layer) {
     var arr = this.clippedArr;
     var m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
-    var rect = undefined, start_x = undefined, width = undefined;
+    var rect, rectLeftLine, rectRightLine, start_x, width;
+    if (this.konva.clipGroup) {
+      //重置剪辑片段
+      this.konva.clipGroup.removeChildren();
+    }
     for (var i = 0, len = arr.length; i < len; i++) {
       if (arr[i].startTime >= this.m_nBeginTime && arr[i].endTime <= m_nEndTime) {
         //完全位于可视区域内
         start_x = (arr[i].startTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
         width = (arr[i].endTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth - start_x;
+        //画矩形
         rect = new Konva.Rect({
           x: start_x,
           y: this.mainTopBottomMargin + 20,
           width: width,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
-          // fill: 'red',
           fill: 'rgba(255, 0, 0, 0.4)',
-          stroke: 'black',
+          // stroke: 'black',
+          // strokeWidth: 2
+        });
+        //画左右边界线
+        rectLeftLine = new Konva.Line({
+          points: [start_x+4, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+4, this.containerHeight-this.mainTopBottomMargin-20],
+          stroke: 'red',
+          strokeWidth: 2
+        });
+        rectRightLine = new Konva.Line({
+          points: [start_x+width-4, this.mainTopBottomMargin+20, start_x+width, this.mainTopBottomMargin+20, start_x+width, this.containerHeight-this.mainTopBottomMargin-20, start_x+width-4, this.containerHeight-this.mainTopBottomMargin-20],
+          stroke: 'red',
           strokeWidth: 2
         });
       } else if (arr[i].startTime < this.m_nBeginTime) {
         //只有后边的一部分位于可视区域内
         width = (arr[i].endTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
+        //画矩形
         rect = new Konva.Rect({
           x: 0,
           y: this.mainTopBottomMargin + 20,
           width: width,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
-          // fill: 'red',
           fill: 'rgba(255, 0, 0, 0.4)',
-          stroke: 'black',
+          // stroke: 'black',
+          // strokeWidth: 2
+        });
+        //画右边的边界线
+        rectRightLine = new Konva.Line({
+          points: [width-4, this.mainTopBottomMargin+20, width, this.mainTopBottomMargin+20, width, this.containerHeight-this.mainTopBottomMargin-20, width-4, this.containerHeight-this.mainTopBottomMargin-20],
+          stroke: 'red',
           strokeWidth: 2
         });
       } else if (arr[i].endTime > m_nEndTime) {
         //只有前边的一部分位于可视区域内
         start_x = (arr[i].startTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
         width = this.containerWidth - start_x;
+        //画矩形
         rect = new Konva.Rect({
           x: start_x,
           y: this.mainTopBottomMargin + 20,
           width: width,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
           fill: 'rgba(255, 0, 0, 0.4)',
-          stroke: 'black',
+          // stroke: 'black',
+          // strokeWidth: 2
+        });
+        //画左边的边界线
+        rectLeftLine = new Konva.Line({
+          points: [start_x+4, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+4, this.containerHeight-this.mainTopBottomMargin-20],
+          stroke: 'red',
           strokeWidth: 2
         });
       }
-      layer.add(rect);
+      if (rectLeftLine) {
+        this.konva.clipGroup.add(rectLeftLine);
+      }
+      if (rectRightLine) {
+        this.konva.clipGroup.add(rectRightLine);
+      }
+      this.konva.clipGroup.add(rect);
     }
+    layer.add(this.konva.clipGroup);
   };
 
   //插件内部事件初始化
@@ -641,11 +683,11 @@
       }
 
       //重置刻度层
-      that.layer.removeChildren();
-      that.drawLineF(that.layer);
-      that.drawCursor(that.layer);
-      that.drawClipBlock(that.layer);
-      that.layer.draw();
+      that.konva.layer.removeChildren();
+      that.drawLineF(that.konva.layer);
+      that.drawCursor(that.konva.layer);
+      that.drawClipBlock(that.konva.layer);
+      that.konva.layer.draw();
 
       //改变滚动条的宽度和位置
       var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
@@ -673,11 +715,11 @@
         that.m_nBeginTime = that.aTotalTime - that.m_nTotalTime;
       }
       //重置刻度层
-      that.layer.removeChildren();
-      that.drawLineF(that.layer);
-      that.drawCursor(that.layer);
-      that.drawClipBlock(that.layer);
-      that.layer.draw();
+      that.konva.layer.removeChildren();
+      that.drawLineF(that.konva.layer);
+      that.drawCursor(that.konva.layer);
+      that.drawClipBlock(that.konva.layer);
+      that.konva.layer.draw();
 
       //改变滚动条的宽度和位置
       var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
@@ -701,11 +743,11 @@
 
       //调整时间轴的开始时间
       that.m_nBeginTime = that.aTotalTime * scroll_left / 100;
-      that.layer.removeChildren();
-      that.drawLineF(that.layer);
-      that.drawCursor(that.layer);
-      that.drawClipBlock(that.layer);
-      that.layer.batchDraw();
+      that.konva.layer.removeChildren();
+      that.drawLineF(that.konva.layer);
+      that.drawCursor(that.konva.layer);
+      that.drawClipBlock(that.konva.layer);
+      that.konva.layer.batchDraw();
       $('#timescale-scroll-bar').css('left', scroll_left + '%');
     }
     $('#timescale-scroll-bar').on('mousedown', function(e) {
@@ -720,10 +762,63 @@
     });
 
     //入点点击事件
-    $('#timescale-clip-start').on('click', function() {
+    $('#timescale-clip-start').on('click', function(e) {
+      that.clipStart();
+      that.drawClipBlock(that.konva.layer);
+      that.konva.layer.draw();
+    });
 
+    //出点点击事件
+    $('#timescale-clip-end').on('click', function(e) {
+      that.clipEnd();
+      that.drawClipBlock(that.konva.layer);
+      that.konva.layer.draw();
     });
   };
+
+  //剪辑开始的点
+  Class.prototype.clipStart = function() {
+    var currentTime = this.currentTime;
+    for (var i = 0, len = this.clippedArr.length; i < len; i++) {
+      if (currentTime < this.clippedArr[i].startTime) {
+        //当前时间点位于某个剪辑片段前
+        this.clippedArr.splice(i, 0, {startTime: currentTime, endTime: this.clippedArr[i].startTime});
+        break;
+      } else if (currentTime >= this.clippedArr[i].startTime && currentTime <= this.clippedArr[i].endTime) {
+        //当前时间点位于某个剪辑片段上
+        this.clippedArr[i].startTime = currentTime;
+        break;
+      }
+    }
+    if (i == len) {
+      //当前时间点位于所有剪辑片段之后，
+      this.clippedArr.push({
+        startTime: currentTime,
+        endTime: this.aTotalTime
+      });
+    }
+  };
+
+  //剪辑结束的点
+  Class.prototype.clipEnd = function() {
+    var currentTime = this.currentTime;
+    for (var i = 0, len = this.clippedArr.length; i < len; i++) {
+      if (currentTime < this.clippedArr[i].startTime) {
+        //当前时间点位于某个剪辑片段前
+        if (i === 0) {
+          //在第一个剪辑片段前
+          this.clippedArr.splice(i, 0, {startTime: 0, endTime: currentTime});
+        } else {
+          this.clippedArr.splice(i, 0, {startTime: this.clippedArr[i-1].startTime, endTime: currentTime});
+        }
+        break;
+      } else if (currentTime >= this.clippedArr[i].startTime && currentTime <= this.clippedArr[i].endTime) {
+        //当前时间点位于某个剪辑片段上
+        this.clippedArr[i].endTime = currentTime;
+        break;
+      }
+    }
+  }
 
   //触发对应的事件
   Class.prototype.emit = function(event) {
@@ -746,8 +841,8 @@
       }
     }
     this.currentTime = total;
-    this.drawCursor(this.layer);
-    this.layer.batchDraw();
+    this.drawCursor(this.konva.layer);
+    this.konva.layer.batchDraw();
   };
 
   //播放
@@ -811,11 +906,22 @@
     var height = that.containerHeight = parseFloat(ready.getStyle(ele, 'height'));
     var totalTime = 0, currentTime = 0; //totalTime和currentTime单位是毫秒
 
+    //计算总时间
     for (var i = 0, len = sectionArr.length; i < len; i++) {
       totalTime += sectionArr[i].duration;
     }
     that.aTotalTime = totalTime;
     $('.timescale .total-time').html($.msToHMS(totalTime));
+
+    //计算被剪切掉的片段
+    for (var i = 0, len = clipsArr.length - 1; i < len; i++) {
+      if (clipsArr[i].endTime < clipsArr[i+1].startTime) {
+        that.clippedArr.push({
+          startTime: clipsArr[i].endTime,
+          endTime: clipsArr[i+1].startTime
+        });
+      }
+    }
 
     //背景颜色
     var rect = new Konva.Rect({
@@ -826,7 +932,7 @@
       fill: backgroundColor
     });
     // add the shape to the layer
-    that.staticLayer.add(rect);
+    that.konva.staticLayer.add(rect);
 
     //中间的横线
     var line = new Konva.Line({
@@ -834,19 +940,18 @@
       stroke: iconColor,
       strokeWidth: 4
     });
-    that.staticLayer.add(line);
-    that.staticLayer.draw();
+    that.konva.staticLayer.add(line);
+    that.konva.staticLayer.draw();
 
 
     that.m_nTotalTime = that.aTotalTime;
-    that.drawLineF(that.layer);
-    that.drawCursor(that.layer);
+    that.drawLineF(that.konva.layer);
+    that.drawCursor(that.konva.layer);
 
-    that.clippedArr = [{startTime: 5000, endTime: 10000}, {startTime: 60000, endTime: 150000}];
-    that.drawClipBlock(that.layer);
+    // that.clippedArr = [{startTime: 5000, endTime: 10000}, {startTime: 60000, endTime: 150000}];
+    that.drawClipBlock(that.konva.layer);
 
-    that.layer.draw();
-    // that.stage.add(staticLayer);
+    that.konva.layer.draw();
   };
 
   /** 
@@ -895,16 +1000,19 @@
     var canvas = document.getElementById('timescale-main');
     var width = that.containerWidth = parseFloat(ready.getStyle(canvas, 'width'));
     var height = that.containerHeight = parseFloat(ready.getStyle(canvas, 'height'));
-    that.stage = new Konva.Stage({
+    that.konva.stage = new Konva.Stage({
       container: 'timescale-main',
       width: width,
       height: height
     });
     //动态变化的图层
-    that.layer = new Konva.Layer();
+    that.konva.layer = new Konva.Layer();
     //初始化不再改变的图层
-    that.staticLayer = new Konva.Layer();
-    that.stage.add(that.staticLayer, that.layer);
+    that.konva.staticLayer = new Konva.Layer();
+
+    //初始化剪辑片段组
+    this.konva.clipGroup = new Konva.Group();
+    that.konva.stage.add(that.konva.staticLayer, that.konva.layer);
   };
 
   timescale.render = function(options) {
