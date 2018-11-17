@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-17 15:00:02
+ * @Last Modified time: 2018-11-17 16:33:18
  */
 ;(function() {
   var ready = {
@@ -143,8 +143,9 @@
       stage: null, // 舞台
       layer: null, //动态图层
       staticLayer: null, // 静态图层
-      clipGroup: null //剪辑片段分组
-    }
+      clipGroup: null, //剪辑片段分组
+      delEle: [] //将要删除的元素
+    };
     //事件队列(key为事件名，value为数组，数组内存放事件的回调函数)
     that.eventListObj = {};
 
@@ -563,6 +564,7 @@
   };
 
   Class.prototype.drawClipBlock = function(layer) {
+    var that = this;
     var arr = this.clippedArr;
     var m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
     var rect, rectLeftLine, rectRightLine, start_x, width;
@@ -582,6 +584,7 @@
           width: width,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
           fill: 'rgba(255, 0, 0, 0.4)',
+          name: 'clip_' + i
           // stroke: 'black',
           // strokeWidth: 2
         });
@@ -589,12 +592,14 @@
         rectLeftLine = new Konva.Line({
           points: [start_x+4, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+4, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
-          strokeWidth: 2
+          strokeWidth: 2,
+          name: 'clip_' + i
         });
         rectRightLine = new Konva.Line({
           points: [start_x+width-4, this.mainTopBottomMargin+20, start_x+width, this.mainTopBottomMargin+20, start_x+width, this.containerHeight-this.mainTopBottomMargin-20, start_x+width-4, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
-          strokeWidth: 2
+          strokeWidth: 2,
+          name: 'clip_' + i
         });
       } else if (arr[i].startTime < this.m_nBeginTime) {
         //只有后边的一部分位于可视区域内
@@ -606,6 +611,7 @@
           width: width,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
           fill: 'rgba(255, 0, 0, 0.4)',
+          name: 'clip_' + i
           // stroke: 'black',
           // strokeWidth: 2
         });
@@ -613,7 +619,8 @@
         rectRightLine = new Konva.Line({
           points: [width-4, this.mainTopBottomMargin+20, width, this.mainTopBottomMargin+20, width, this.containerHeight-this.mainTopBottomMargin-20, width-4, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
-          strokeWidth: 2
+          strokeWidth: 2,
+          name: 'clip_' + i
         });
       } else if (arr[i].endTime > m_nEndTime) {
         //只有前边的一部分位于可视区域内
@@ -626,6 +633,7 @@
           width: width,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
           fill: 'rgba(255, 0, 0, 0.4)',
+          name: 'clip_' + i
           // stroke: 'black',
           // strokeWidth: 2
         });
@@ -633,7 +641,8 @@
         rectLeftLine = new Konva.Line({
           points: [start_x+4, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+4, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
-          strokeWidth: 2
+          strokeWidth: 2,
+          name: 'clip_' + i
         });
       }
       if (rectLeftLine) {
@@ -642,6 +651,24 @@
       if (rectRightLine) {
         this.konva.clipGroup.add(rectRightLine);
       }
+      //单击选中相应的剪辑片段
+      rect.on('click', function(e) {
+        var className = this.getName();
+        // var ele = that.konva.layer.find('.' + className);
+        if (!this.hasOwnProperty('checked')) {
+          this.checked = false;
+        }
+        if (this.checked === false) {
+          this.checked = true;
+          this.setAttr('fill', 'rgba(100, 0, 0, 0.6)');
+          that.konva.delEle.push('.' + className);
+        } else if (this.checked === true) {
+          this.checked = false;
+          this.setAttr('fill', 'rgba(255, 0, 0, 0.4)');
+          that.konva.delEle.splice(that.konva.delEle.indexOf('.' + className), 1);
+        }
+        that.konva.layer.draw();
+      });
       this.konva.clipGroup.add(rect);
     }
     layer.add(this.konva.clipGroup);
@@ -774,6 +801,17 @@
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.draw();
     });
+
+    //删除选中剪辑片段
+    $('#timescale-del').on('click', function() {
+      var index = 0;
+      for (var i = 0, len = that.konva.delEle.length; i < len; i++) {
+        index = that.konva.delEle[i].split('_')[1];
+        that.konva.layer.find(that.konva.delEle[i]).remove();
+        that.clippedArr.splice(index, 1);
+      }
+      that.konva.layer.draw();
+    })
   };
 
   //剪辑开始的点
@@ -807,9 +845,12 @@
         //当前时间点位于某个剪辑片段前
         if (i === 0) {
           //在第一个剪辑片段前
-          this.clippedArr.splice(i, 0, {startTime: 0, endTime: currentTime});
+          this.clippedArr.unshift({
+            startTime: 0,
+            endTime: currentTime
+          });
         } else {
-          this.clippedArr.splice(i, 0, {startTime: this.clippedArr[i-1].startTime, endTime: currentTime});
+          this.clippedArr.splice(i, 0, {startTime: this.clippedArr[i-1].endTime, endTime: currentTime});
         }
         break;
       } else if (currentTime >= this.clippedArr[i].startTime && currentTime <= this.clippedArr[i].endTime) {
@@ -817,6 +858,12 @@
         this.clippedArr[i].endTime = currentTime;
         break;
       }
+    }
+    if (i === len) {
+      this.clippedArr.push({
+        startTime: this.clippedArr[len - 1].endTime,
+        endTime: this.aTotalTime
+      });
     }
   }
 
@@ -1009,6 +1056,12 @@
     that.konva.layer = new Konva.Layer();
     //初始化不再改变的图层
     that.konva.staticLayer = new Konva.Layer();
+    that.konva.staticLayer.on('click', function(e) {
+      var clickTime = (e.evt.layerX / that.containerWidth * that.m_nTotalTime + that.m_nBeginTime) / 1000;
+      that.currentTime = Math.round(clickTime) * 1000;
+      that.drawCursor(that.konva.layer);
+      that.konva.layer.draw();
+    });
 
     //初始化剪辑片段组
     this.konva.clipGroup = new Konva.Group();
