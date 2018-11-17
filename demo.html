@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>视频剪辑插件demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    #timeScale {
+      width: 80%;
+      height: 200px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="timeScale"></div>
+  <!-- <script src="https://cdn.bootcss.com/konva/2.5.0/konva.min.js"></script> -->
+  <script src="./TimeScale.js"></script>
+  <script type="text/javascript">
+    // var timeScale = new TimeScale("timeScale");
+    var sectionArr = [{
+      id: 1,
+      duration: 612000
+      // duration: 10000
+    }];
+    var clipsArr = [{
+      startTime: 0,
+      endTime: 2000
+    }, {
+      startTime: 4000,
+      endTime: 10000
+    }]
+    var timeScale = timescale.render({
+      ele: 'timeScale',
+      sectionArr: sectionArr,
+      clipsArr: clipsArr,
+      // backgroundColor: '#a0a0a0',
+      // fontColor: '#333',
+      // iconColor: '#333'
+    });
+    // console.log(timeScale)
+    var time = 2000;
+    setInterval(function() {
+      timeScale.seekTo(1, time);
+      time += 1000;
+    }, 1000);
+    timeScale.on('play', function() {
+      console.log('play')
+    })
+    // timeScale.timelineLoad();
+  </script>
+</body>
+</html>

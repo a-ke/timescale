@@ -1,0 +1,921 @@
+/*
+ * @Name: TimeScale 时间轴插件
+ * @Author: a-ke 
+ * @Date: 2018-10-29 11:02:43 
+ * @Last Modified by: a-ke
+ * @Last Modified time: 2018-11-17 10:42:47
+ */
+;(function() {
+  var ready = {
+    //获取当前脚步的基础路径
+    getPath: function() {
+      var jsPath = document.currentScript ? document.currentScript.src: (function(){
+        var js = document.scripts,
+        last = js.length - 1,
+        src;
+        for (var i = last; i > 0; i--) {
+          if (js[i].readyState === 'interactive') {
+            src = js[i].src;
+            break;
+          }
+        }
+        return src || js[last].src;
+      })();
+      return jsPath.substring(0, jsPath.lastIndexOf('/') + 1);
+    }()
+
+    //获取节点的style属性值
+    ,getStyle: function(node, name) {
+      // var style = node.currentStyle ? node.currentStyle : window.getComputedStyle(node, null);
+      // return style[style.getPropertyValue ? 'getPropertyValue' : 'getAttribute'](name);
+      return window.getComputedStyle(node)[name];
+    }
+
+    //载入css配件
+    ,link: function(href, fn, cssname) {
+
+      //未设置路径，则不主动加载css
+      if(!timescale.path) return;
+
+      var head = document.getElementsByTagName('head')[0], link = document.createElement('link');
+      if (typeof fn === 'string') cssname = fn;
+      var app = (cssname || href).replace(/\.|\//g, '');
+      var id = 'timescale-' + app, timeout = 0;
+
+      link.rel = 'stylesheet';
+      link.href = timescale.path + href;
+      link.id = id;
+
+      if (!document.getElementById(id)) {
+        head.appendChild(link);
+      }
+
+      if (typeof fn !== 'function') return;
+
+      //轮巡css是否加载完毕
+      (function poll() {
+        if (++timeout > 8 * 1000 / 100) {
+          return window.console || console.error('timescale.css: Invalid');
+        };
+        parseInt(ready.getStyle(document.getElementById(id), 'width')) === 1989 ? fn() : setTimeout(poll, 100);
+      })();
+    }
+
+    //载入依赖的js文件
+    ,script: function(src, fn, jsname) {
+      //未设置路径，则不主动加载js
+      if (!timescale.path) return;
+      if (typeof fn === 'string') jsname = fn;
+      var app = (jsname || src).replace(/\.|\//g, '');
+      var id = 'timescale-' + app,
+      timeout = 0;
+
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = timescale.path + src;
+      script.id = id;
+
+      if (!document.getElementById(id)) {
+        document.body.appendChild(script);
+      }
+
+      if (typeof fn !== 'function') return;
+      (function poll() {
+        if (++timeout > 8 * 1000 / 100) {
+          return window.console || console.error('konva.js: Invalid');
+        }
+        window.Konva ? fn() : setTimeout(poll, 100);
+      })();
+    }
+  }
+
+  ,timescale = {
+    v: '1.0.0',
+    config: {}, //全局配置项
+    path: ready.getPath,
+    
+    //设置全局项
+    set: function(options) {
+      var that = this;
+      that.config  = $.extend({}, that.config, options);
+      return that;
+    },
+
+    //主体css等待事件
+    ready: function(fn) {
+      var cssname = 'timescale',
+      path = 'css/timescale.css?v=' + timescale.v;
+      ready.link(path, function() {
+        //引入依赖的konva.js文件
+        ready.script('js/konva.min.js', fn, 'konva');
+      }, cssname);
+    },
+
+  }
+
+  //颜色值
+  ,backgroundColor = '#141F39', fontColor = '#fff', iconColor = '#097DB1', cursorColor = '#FF6600'
+  
+  //操作当前实例
+  ,thisTimeScale = function() {
+    var that = this;
+    return {
+      config: that.config,
+      seekTo: that.seekTo.bind(that),
+      play: that.play.bind(that),
+      pause: that.pause.bind(that),
+      on: that.on.bind(that),
+      off: that.off.bind(that)
+    };
+  }
+
+  //组件构造器
+  ,Class = function(options) {
+    var that = this;
+    that.config = $.extend({}, that.config, timescale.config, options);
+    backgroundColor = that.config.backgroundColor || backgroundColor;
+    fontColor = that.config.fontColor || fontColor;
+    iconColor = that.config.fontColor || iconColor;
+    cursorColor = that.config.cursorColor || cursorColor;
+
+    //事件队列(key为事件名，value为数组，数组内存放事件的回调函数)
+    that.eventListObj = {};
+
+    //变量初始化
+    that.containerWidth = 0; //容器的宽度
+    that.containerHeight = 0; //容器的高度
+    that.mainTopBottomMargin = 20;
+    that.aTotalTime = 60 * 60 * 1000; //默认总时间为一个小时
+    that.currentTime = 0; // 当前时间
+    // that.playing = false;
+    that.scale = 1;
+    that.maxScale = false; //放大是否达到最大
+    that.clippedArr = []; //剪掉的片段 [{startTime: 1000, endTime: 2000}]
+    //m_n 代表一屏
+    that.m_nBeginTime = 0;
+    that.m_nTotalTime = 0;
+
+    timescale.ready(function() {
+      that.init();
+    });
+  }
+
+  //DOM查找
+  ,$ = function(selector){   
+    return new JQ(selector);
+  }
+  
+  //DOM构造器
+  ,JQ = function(selector){
+    var index = 0
+    ,nativeDOM = typeof selector === 'object' ? [selector] : (
+      this.selector = selector
+      ,document.querySelectorAll(selector || null)
+    );
+    for(; index < nativeDOM.length; index++){
+      this.push(nativeDOM[index]);
+    }
+  };
+
+  //普通对象深度扩展
+  $.extend = function(){
+    var ai = 1, args = arguments
+    ,clone = function(target, obj){
+      target = target || (obj.constructor === Array ? [] : {}); 
+      for(var i in obj){
+        //如果值为对象，则进入递归，继续深度合并
+        target[i] = (obj[i] && (obj[i].constructor === Object))
+          ? clone(target[i], obj[i])
+        : obj[i];
+      }
+      return target;
+    }
+
+    args[0] = typeof args[0] === 'object' ? args[0] : {};
+
+    for(; ai < args.length; ai++){
+      if(typeof args[ai] === 'object'){
+        clone(args[0], args[ai])
+      }
+    }
+    return args[0];
+  };
+  //对象遍历
+  $.each = function(obj, fn){
+    var key
+    ,that = this;
+    if(typeof fn !== 'function') return that;
+    obj = obj || [];
+    if(obj.constructor === Object){
+      for(key in obj){
+        if(fn.call(obj[key], key, obj[key])) break;
+      }
+    } else {
+      for(key = 0; key < obj.length; key++){
+        if(fn.call(obj[key], key, obj[key])) break;
+      }
+    }
+    return that;
+  };
+
+  //数字前置补零
+  $.digit = function(num, length){
+    var str = '';
+    num = String(num);
+    length = length || 2;
+    for(var i = num.length; i < length; i++){
+      str += '0';
+    }
+    return num < Math.pow(10, length) ? str + (num|0) : num;
+  };
+
+  //函数节流
+  $.throttle = function(fun, delay) {
+    var last, deferTimer;
+    return function() {
+        var that = this;
+        var _args = arguments;
+        var now = +new Date();
+        //取当前时间和之前记录的时间对比，如果超过了规定的间隔则立即执行
+        if (last && now < last + delay) {
+            clearTimeout(deferTimer);
+            deferTimer = setTimeout(function() {
+                fun.apply(that, _args);
+            }, delay);
+        } else {
+            last = now;
+            fun.apply(that, _args);
+        }
+    }
+  };
+
+  //时间转换（毫秒秒转时分秒）
+  $.msToHMS = function(time) {
+    var hour, min, sec, time = time / 1000;
+    hour = parseInt(time / (60 * 60));
+    min = parseInt((time % (60 * 60)) / 60);
+    sec = parseInt(time % 60);
+    return $.digit(hour, 2) + ':' + $.digit(min, 2) + ':' + $.digit(sec, 2);
+  };
+
+  JQ.prototype = [];
+  JQ.prototype.constructor = JQ;
+
+  //追加字符
+  JQ.addStr = function(str, new_str){
+    str = str.replace(/\s+/, ' ');
+    new_str = new_str.replace(/\s+/, ' ').split(' ');
+    $.each(new_str, function(ii, item){
+      if(!new RegExp('\\b'+ item + '\\b').test(str)){
+        str = str + ' ' + item;
+      }
+    });
+    return str.replace(/^\s|\s$/, '');
+  };
+  
+  //移除值
+  JQ.removeStr = function(str, new_str){
+    str = str.replace(/\s+/, ' ');
+    new_str = new_str.replace(/\s+/, ' ').split(' ');
+    $.each(new_str, function(ii, item){
+      var exp = new RegExp('\\b'+ item + '\\b')
+      if(exp.test(str)){
+        str = str.replace(exp, '');
+      }
+    });
+    return str.replace(/\s+/, ' ').replace(/^\s|\s$/, '');
+  };
+  
+  //查找子元素
+  JQ.prototype.find = function(selector){
+    var that = this;
+    var index = 0, arr = []
+    ,isObject = typeof selector === 'object';
+    
+    this.each(function(i, item){
+      var nativeDOM = isObject ? [selector] : item.querySelectorAll(selector || null);
+      for(; index < nativeDOM.length; index++){
+        arr.push(nativeDOM[index]);
+      }
+      that.shift();
+    });
+    
+    if(!isObject){
+      that.selector =  (that.selector ? that.selector + ' ' : '') + selector
+    }
+    
+    $.each(arr, function(i, item){
+      that.push(item);
+    });
+    
+    return that;
+  };
+  //DOM遍历
+  JQ.prototype.each = function(fn){
+    return $.each.call(this, this, fn);
+  };
+  JQ.prototype.addClass = function(className, type) {
+     return this.each(function(index, item){
+      item.className = JQ[type ? 'removeStr' : 'addStr'](item.className, className)
+    });
+  };
+
+  //移除css类
+  JQ.prototype.removeClass = function(className){
+    return this.addClass(className, true);
+  };
+
+  //是否包含css类
+  JQ.prototype.hasClass = function(className){
+    var has = false;
+    this.each(function(index, item){
+      if(new RegExp('\\b'+ className +'\\b').test(item.className)){
+        has = true;
+      }
+    });
+    return has;
+  };
+
+  JQ.prototype.css=function(attr,value){
+    //遍历选取当前元素
+    for(var i=0;i<this.length;i++){
+      this[i].style[attr]=value;
+    }
+    return this;
+  }
+
+  //添加或获取属性
+  JQ.prototype.attr = function(key, value){
+    var that = this;
+    return value === undefined ? function(){
+      if(that.length > 0) return that[0].getAttribute(key);
+    }() : that.each(function(index, item){
+      item.setAttribute(key, value);
+    });   
+  };
+  
+  //移除属性
+  JQ.prototype.removeAttr = function(key){
+    return this.each(function(index, item){
+      item.removeAttribute(key);
+    });
+  };
+  
+  //设置HTML内容
+  JQ.prototype.html = function(html){
+    return this.each(function(index, item){
+      item.innerHTML = html;
+    });
+  };
+  
+  //设置值
+  JQ.prototype.val = function(value){
+    return this.each(function(index, item){
+      item.value = value;
+    });
+  };
+  
+  //追加内容
+  JQ.prototype.append = function(elem){
+    return this.each(function(index, item){
+      typeof elem === 'object' 
+        ? item.appendChild(elem)
+      :  item.innerHTML = item.innerHTML + elem;
+    });
+  };
+  
+  //移除内容
+  JQ.prototype.remove = function(elem){
+    return this.each(function(index, item){
+      elem ? item.removeChild(elem) : item.parentNode.removeChild(item);
+    });
+  };
+  
+  //事件绑定
+  JQ.prototype.on = function(eventName, fn){
+    return this.each(function(index, item){
+      item.attachEvent ? item.attachEvent('on' + eventName, function(e){
+        e.target = e.srcElement;
+        fn.call(item, e);
+      }) : item.addEventListener(eventName, fn, false);
+    });
+  };
+  
+  //解除事件
+  JQ.prototype.off = function(eventName, fn){
+    return this.each(function(index, item){
+      item.detachEvent 
+        ? item.detachEvent('on'+ eventName, fn)  
+      : item.removeEventListener(eventName, fn, false);
+    });
+  };
+
+  //绘制刻度线
+  Class.prototype.drawLineF = function(layer) {
+    // var that = this;
+    var m_nParts = 0; //分为几大格
+    var fScrap = 0; //不足一个大格的像素宽度
+    var m_nBigCellTimeSpan = 0; //每个大格的时长(毫秒)
+    var maxParts = 14; //一屏时间最多分多少个大格
+    var m_nTotalTime = this.m_nTotalTime; //一屏区域将要显示的时长(毫秒)
+    var m_nBeginTime = this.m_nBeginTime; //一屏区域开始的时间(毫秒)
+    var m_nBigCellWidth = 0; //每个大格的宽度
+
+    if (m_nTotalTime > 60 * 60 * 1000) {
+      //时长大于一个小时的情况，单位等级：10分-20分-40分-80分...
+      m_nBigCellTimeSpan = 10 * 60 * 1000; //初始10分钟一个大格(毫秒)
+      do {
+        m_nParts = parseInt(m_nTotalTime / m_nBigCellTimeSpan);
+        fScrap = (m_nTotalTime % m_nBigCellTimeSpan) * (this.containerWidth / m_nTotalTime);
+        m_nBigCellTimeSpan *= 2;
+      } while(m_nParts > maxParts);
+
+      m_nBigCellTimeSpan /= 2; //最终使用的Timespan
+    } else if (m_nTotalTime > maxParts * 10 * 1000) {
+      //时长小于1小时大于maxParts * 10 秒的情况，单位等级：20秒-40秒-60秒(1分)-5分<此时大格数肯定不会大于17个>
+      m_nBigCellTimeSpan = 20 * 1000; //初始20秒一个大格(毫秒)
+      m_nParts = maxParts + 1;
+      for(var i = 0; i < 3 && m_nParts > maxParts; i++) {
+        m_nParts = parseInt(m_nTotalTime / m_nBigCellTimeSpan);
+        fScrap = (m_nTotalTime % m_nBigCellTimeSpan) * (this.containerWidth / m_nTotalTime);
+        m_nBigCellTimeSpan += 20 * 1000;
+      }
+      m_nBigCellTimeSpan -= 20 * 1000; //最终使用的Timespan
+      if (m_nParts > maxParts) {
+        //1分钟等级分格仍然太多，则使用5分钟等级
+        m_nBigCellTimeSpan = 5 * 60 * 1000;
+        m_nParts = parseInt(m_nTotalTime / m_nBigCellTimeSpan);
+        fScrap = (m_nTotalTime % m_nBigCellTimeSpan) * (this.containerWidth / m_nTotalTime);
+      }
+    } else {
+      //时长小于maxParts * 10秒的情况，单位等级固定使用10秒
+      m_nBigCellTimeSpan = 10 * 1000; //10秒一个大格，每小格1秒
+      m_nParts = parseInt(m_nTotalTime / m_nBigCellTimeSpan);
+      fScrap = (m_nTotalTime % m_nBigCellTimeSpan) * (this.containerWidth / m_nTotalTime);
+    }
+
+    if (m_nParts == 1) {
+      //判断是否达到最大级别
+      this.maxScale = true;
+    }
+
+    //每个大格的宽度
+    m_nBigCellWidth = (this.containerWidth - fScrap) / m_nParts;
+    //从0时间点到m_nBeginTime时间点之间在大格中所占的宽度
+    var mDistance = m_nBigCellWidth * ((m_nBeginTime % m_nBigCellTimeSpan) / m_nBigCellTimeSpan);
+    //用于显示的每大格起始时间
+    var m_nBigCellStartTime = parseInt(m_nBeginTime / m_nBigCellTimeSpan) * m_nBigCellTimeSpan;
+
+    var m_nBigCellStart_x = 0; // 每个大格的起始 x 位置
+    for(var i = 0; i <= m_nParts + (fScrap > 0 ? 1 : 0); i++) {
+      m_nBigCellStart_x = m_nBigCellWidth * i - mDistance;
+      this.drawBigCell(layer, m_nBigCellStart_x, m_nBigCellWidth, m_nBigCellStartTime);
+      m_nBigCellStartTime += m_nBigCellTimeSpan;
+    }
+
+  };
+
+  //绘制一个大格
+  Class.prototype.drawBigCell = function(layer, start_x, width, start_time) {
+    var that = this;
+    //绘制时间
+    var text = new Konva.Text({
+      x: start_x + 2,
+      y: that.containerHeight - that.mainTopBottomMargin - 14,
+      text: $.msToHMS(start_time),
+      fontSize: 14,
+      fill: fontColor
+    });
+    layer.add(text);
+
+    //绘制刻度
+    //大格左右的两条线
+    var line = new Konva.Line({
+      points: [start_x, that.mainTopBottomMargin, start_x, that.containerHeight - that.mainTopBottomMargin],
+      stroke: iconColor,
+      strokeWidth: 1
+    });
+    layer.add(line);
+    line = new Konva.Line({
+      points: [start_x + width, that.mainTopBottomMargin, start_x + width, that.containerHeight - that.mainTopBottomMargin],
+      stroke: iconColor,
+      strokeWidth: 1
+    });
+    layer.add(line);
+
+    //大格中线
+    line = new Konva.Line({
+      points: [start_x + width / 2, that.mainTopBottomMargin + 20, start_x + width / 2, that.containerHeight - that.mainTopBottomMargin - 20],
+      stroke: iconColor,
+      strokeWidth: 1
+    });
+    layer.add(line);
+
+    //大格短线
+    var smallCellWidth = (width / 10).toFixed(2);
+    for(var i = 1; i <= 10; i++) {
+      if (i === 5) {
+        continue;
+      }
+      line = new Konva.Line({
+        points: [start_x + smallCellWidth * i, that.mainTopBottomMargin + 35, start_x + smallCellWidth * i, that.containerHeight - that.mainTopBottomMargin - 35],
+        stroke: iconColor,
+        strokeWidth: 1
+      });
+      layer.add(line);
+    }
+  };
+
+  //绘制游标
+  Class.prototype.drawCursor = function(layer) {
+    var currentTime = this.currentTime;
+    if (currentTime > this.aTotalTime) {
+      this.currentTime = this.aTotalTime;
+      return;
+    }
+    $('#timeScale .current-time').html($.msToHMS(currentTime));
+
+    if (this.arrow) {
+      this.arrow.remove();
+    }
+    if (currentTime >= this.m_nBeginTime && currentTime <= this.m_nBeginTime + this.m_nTotalTime) {
+      //游标在可视区域
+      var arrow_x = (currentTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
+      this.arrow = new Konva.Arrow({
+        points: [arrow_x, 1, arrow_x, this.containerHeight - 1],
+        pointerLength: 15,
+        pointerWidth : 15,
+        fill: cursorColor,
+        stroke: cursorColor,
+        strokeWidth: 2,
+        pointerAtBeginning: true
+      });
+
+      layer.add(this.arrow);
+    }
+  };
+
+  Class.prototype.drawClipBlock = function(layer) {
+    var arr = this.clippedArr;
+    var m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
+    var rect = undefined, start_x = undefined, width = undefined;
+    for (var i = 0, len = arr.length; i < len; i++) {
+      if (arr[i].startTime >= this.m_nBeginTime && arr[i].endTime <= m_nEndTime) {
+        //完全位于可视区域内
+        start_x = (arr[i].startTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
+        width = (arr[i].endTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth - start_x;
+        rect = new Konva.Rect({
+          x: start_x,
+          y: this.mainTopBottomMargin + 20,
+          width: width,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+          // fill: 'red',
+          fill: 'rgba(255, 0, 0, 0.4)',
+          stroke: 'black',
+          strokeWidth: 2
+        });
+      } else if (arr[i].startTime < this.m_nBeginTime) {
+        //只有后边的一部分位于可视区域内
+        width = (arr[i].endTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
+        rect = new Konva.Rect({
+          x: 0,
+          y: this.mainTopBottomMargin + 20,
+          width: width,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+          // fill: 'red',
+          fill: 'rgba(255, 0, 0, 0.4)',
+          stroke: 'black',
+          strokeWidth: 2
+        });
+      } else if (arr[i].endTime > m_nEndTime) {
+        //只有前边的一部分位于可视区域内
+        start_x = (arr[i].startTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
+        width = this.containerWidth - start_x;
+        rect = new Konva.Rect({
+          x: start_x,
+          y: this.mainTopBottomMargin + 20,
+          width: width,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+          fill: 'rgba(255, 0, 0, 0.4)',
+          stroke: 'black',
+          strokeWidth: 2
+        });
+      }
+      layer.add(rect);
+    }
+  };
+
+  //插件内部事件初始化
+  Class.prototype.eventInit = function() {
+    var that = this;
+    //播放按钮
+    $('#timescale-play').on('click', function(e) {
+      var $iconfont = $(e.currentTarget).find('.iconfont');
+      if ($iconfont.hasClass('icon-bofang')) {
+        $iconfont.removeClass('icon-bofang');
+        $iconfont.addClass('icon-zanting');
+        that.emit('play');
+      } else {
+        $iconfont.removeClass('icon-zanting');
+        $iconfont.addClass('icon-bofang');
+        that.emit('pause');
+      }
+    });
+
+    //放大按钮
+    $('#timescale-zoomIn').on('click', function(e) {
+      if (that.maxScale) {
+        return;
+      }
+      that.scale *= 2;
+      that.m_nTotalTime = that.aTotalTime / that.scale;
+
+      //将游标尽可能的居中
+      if (that.currentTime >= that.m_nTotalTime / 2 && that.aTotalTime - that.currentTime >= that.m_nTotalTime / 2) {
+        //如果条件允许，则将游标置于最中间
+        that.m_nBeginTime = that.currentTime - that.m_nTotalTime / 2;
+      } else if (that.currentTime < that.m_nTotalTime / 2) {
+        that.m_nBeginTime = 0;
+      } else if (that.aTotalTime - that.currentTime < that.m_nTotalTime / 2) {
+        that.m_nBeginTime = that.aTotalTime - that.m_nTotalTime;
+      }
+
+      //重置刻度层
+      that.layer.removeChildren();
+      that.drawLineF(that.layer);
+      that.drawCursor(that.layer);
+      that.drawClipBlock(that.layer);
+      that.layer.draw();
+
+      //改变滚动条的宽度和位置
+      var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
+      var width = that.m_nTotalTime / that.aTotalTime * 100;
+      $('#timescale-scroll-bar').attr('style', 'width:'+width+'%;left:'+startPosition+'%');
+    });
+
+    //缩小按钮
+    $('#timescale-zoomOut').on('click', function(e) {
+      that.scale /= 2;
+      if (that.scale < 1) {
+        that.scale = 1;
+        return;
+      }
+      that.maxScale = false;
+      that.m_nTotalTime = that.aTotalTime / that.scale;
+
+      //将游标尽可能的居中
+      if (that.currentTime >= that.m_nTotalTime / 2 && that.aTotalTime - that.currentTime >= that.m_nTotalTime / 2) {
+        //如果条件允许，则将游标置于最中间
+        that.m_nBeginTime = that.currentTime - that.m_nTotalTime / 2;
+      } else if (that.currentTime < that.m_nTotalTime / 2) {
+        that.m_nBeginTime = 0;
+      } else if (that.aTotalTime - that.currentTime < that.m_nTotalTime / 2) {
+        that.m_nBeginTime = that.aTotalTime - that.m_nTotalTime;
+      }
+      //重置刻度层
+      that.layer.removeChildren();
+      that.drawLineF(that.layer);
+      that.drawCursor(that.layer);
+      that.drawClipBlock(that.layer);
+      that.layer.draw();
+
+      //改变滚动条的宽度和位置
+      var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
+      var width = that.m_nTotalTime / that.aTotalTime * 100;
+      $('#timescale-scroll-bar').attr('style', 'width:'+width+'%;left:'+startPosition+'%');
+    });
+
+    //滚动条拖拽事件
+    var old_x = 0;
+    var mouse_start_x = 0;
+    function mousemove(e) {
+      var scroll_left = (e.clientX - mouse_start_x + old_x) / that.containerWidth * 100;
+      var self_width = parseFloat(ready.getStyle($('#timescale-scroll-bar')[0], 'width'));
+
+      //边界碰撞检测
+      if (scroll_left <= 0) {
+        scroll_left = 0;
+      } else if (scroll_left >= (100 - self_width / that.containerWidth * 100)) {
+        scroll_left = 100 - self_width / that.containerWidth * 100;
+      }
+
+      //调整时间轴的开始时间
+      that.m_nBeginTime = that.aTotalTime * scroll_left / 100;
+      that.layer.removeChildren();
+      that.drawLineF(that.layer);
+      that.drawCursor(that.layer);
+      that.drawClipBlock(that.layer);
+      that.layer.batchDraw();
+      $('#timescale-scroll-bar').css('left', scroll_left + '%');
+    }
+    $('#timescale-scroll-bar').on('mousedown', function(e) {
+      mouse_start_x = e.clientX;
+      old_x = parseFloat(ready.getStyle($('#timescale-scroll-bar')[0], 'left'));
+      // $(document).on('mousemove', mousemove);
+      document.onmousemove = $.throttle(mousemove, 50);
+    });
+    $(document).on('mouseup', function(e) {
+      // $(this).off('mousemove', mousemove);
+      document.onmousemove = null;
+    });
+
+    //入点点击事件
+    $('#timescale-clip-start').on('click', function() {
+
+    });
+  };
+
+  //触发对应的事件
+  Class.prototype.emit = function(event) {
+    if (this.eventListObj.hasOwnProperty(event)) {
+      for (var i = 0, len = this.eventListObj[event].length; i < len; i++) {
+        this.eventListObj[event][i]();
+      }
+    }
+  };
+  /******** 插件暴露在外的方法 start ***********/
+  //设置播放进度
+  Class.prototype.seekTo = function(id, time) {
+    var total = 0;
+    for(var i = 0, len = sectionArr.length; i < len; i++) {
+      if (id === sectionArr[i].id) {
+        total += time;
+        break;
+      } else {
+        total += sectionArr[i].duration;
+      }
+    }
+    this.currentTime = total;
+    this.drawCursor(this.layer);
+    this.layer.batchDraw();
+  };
+
+  //播放
+  Class.prototype.play = function() {
+    $('#timescale-play .iconfont').removeClass('icon-bofang').addClass('icon-zanting');
+  };
+
+  //暂停
+  Class.prototype.pause = function() {
+    $('#timescale-play .iconfont').removeClass('icon-zanting').addClass('icon-bofang');
+  };
+
+
+  //监听插件的事件
+  Class.prototype.on = function(event, fun) {
+    if (this.eventListObj.hasOwnProperty(event)) {
+      this.eventListObj[event].push(fun);
+    } else {
+      this.eventListObj[event] = [fun];
+    }
+  };
+
+  //移除插件的事件监听
+  Class.prototype.off = function(event, fun) {
+    if (this.eventListObj.hasOwnProperty(event)) {
+      for (var i = 0, len = this.eventListObj[event].length; i < len; i++) {
+        if (this.eventListObj[event][i] === fun) {
+          this.eventListObj[event].splice(i, 1);
+        }
+      }
+    }
+  }
+
+  /******** 插件暴露在外的方法 end ***********/
+
+  /********** 插件暴露在外的事件回调 start ************/
+
+
+  /********** 插件暴露在外的事件回调 end ************/
+
+  Class.prototype.init = function() {
+    var that = this;
+    that.frameInit();
+    that.timelineLoad(that.config.sectionArr, that.config.clipsArr);
+    that.eventInit();
+  };
+
+  /** 
+   * @method timelineLoad
+   * @desc 用来初始化视频剪辑控件
+   * @param {string} sectionArr - [{id: 1, duration: 100000}]
+   * 备注：此参数为所有视频片段的描述信息，id为视频片段的唯一标识，duration为每个片段的时长(毫秒)
+   * @param {string} clipsArr - [{startTime: 0, endTime: 2000}, {startTime: 4000, endTime: 100000}]
+   * 备注：单位为毫秒ms已保存的片段描述信息，startTime为拼合后起始点的时长，endTime为拼合后终止点的时长
+   * @returns void
+   */
+  Class.prototype.timelineLoad = function(sectionArr, clipsArr) {
+    var that = this;
+    var ele = document.getElementById('timescale-main');
+    var width = that.containerWidth = parseFloat(ready.getStyle(ele, 'width'));
+    var height = that.containerHeight = parseFloat(ready.getStyle(ele, 'height'));
+    var totalTime = 0, currentTime = 0; //totalTime和currentTime单位是毫秒
+
+    for (var i = 0, len = sectionArr.length; i < len; i++) {
+      totalTime += sectionArr[i].duration;
+    }
+    that.aTotalTime = totalTime;
+    $('.timescale .total-time').html($.msToHMS(totalTime));
+
+    //背景颜色
+    var rect = new Konva.Rect({
+      x: 0,
+      y: that.mainTopBottomMargin,
+      width: width,
+      height: height - that.mainTopBottomMargin * 2,
+      fill: backgroundColor
+    });
+    // add the shape to the layer
+    that.staticLayer.add(rect);
+
+    //中间的横线
+    var line = new Konva.Line({
+      points: [0, height/2 - 2, width, height/2 - 2],
+      stroke: iconColor,
+      strokeWidth: 4
+    });
+    that.staticLayer.add(line);
+    that.staticLayer.draw();
+
+
+    that.m_nTotalTime = that.aTotalTime;
+    that.drawLineF(that.layer);
+    that.drawCursor(that.layer);
+
+    that.clippedArr = [{startTime: 5000, endTime: 10000}, {startTime: 60000, endTime: 150000}];
+    that.drawClipBlock(that.layer);
+
+    that.layer.draw();
+    // that.stage.add(staticLayer);
+  };
+
+  /** 
+   * @method frameInit
+   * @desc 时间轴框架初始化
+   */
+  Class.prototype.frameInit = function() {
+    var that = this;
+    var ele = document.getElementById(that.config.ele);
+    var operation = "<div class='timescale-operation'>\
+      <div class='timescale-timeshow'>\
+        <span>当前：<span class='current-time'>02:00:00</span></span>\
+        <span>总时长：<span class='total-time'>00:00:00</span></span>\
+      </div>\
+      <div class='timescale-operation-group'>\
+        <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>\
+      </div>\
+      <div class='timescale-operation-group'>\
+        <span title='入点' id='timescale-clip-start'><i class='iconfont icon-rudian'></i></span>\
+        <span title='出点' id='timescale-clip-end'><i class='iconfont icon-chudian'></i></span>\
+        <span title='剪辑' id='timescale-clip'><i class='iconfont icon-jianqie'></i></span>\
+        <span title='删除' id='timescale-del'><i class='iconfont icon-delete'></i></span>\
+      </div>\
+      <div class='timescale-operation-group'>\
+        <span title='放大' id='timescale-zoomIn'><i class='iconfont icon-fangda'></i></span>\
+        <span title='缩小' id='timescale-zoomOut'><i class='iconfont icon-suoxiao'></i></span>\
+      </div>\
+    </div>";
+    var main = "<div id='timescale-main'></div>";
+    var foot = "<div id='timescale-scroll'>\
+      <div id='timescale-scroll-bar'></div>\
+      <div class='timescale-scroll-draggerRail'></div>\
+    </div>"
+    var totalSrc = operation + main + foot;
+
+    //自定义颜色导入
+    var style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = ".timescale{border-color:"+iconColor+"}.timescale-operation{background-color:"+backgroundColor+"}.timescale-operation .iconfont{color:"+iconColor+"}.timescale-operation .timescale-timeshow>span{color:"+fontColor+"}.timescale-operation .timescale-timeshow .current-time,.timescale-operation .timescale-timeshow .total-time{border-color:"+iconColor+";-webkit-box-shadow: 0 0 5px 1px "+iconColor+" inset;-moz-box-shadow: 0 0 5px 1px "+iconColor+" inset;box-shadow: 0 0 5px 1px "+iconColor+" inset;}.timescale-operation .timescale-operation-group{border-color:"+iconColor+"}#timescale-scroll-bar{background-color:"+iconColor+"}#timescale-main{border-color:"+iconColor+"}.timescale-operation .timescale-operation-group span:hover{-webkit-box-shadow: 0 0 10px 1px "+iconColor+" inset;-moz-box-shadow: 0 0 10px 1px "+iconColor+" inset;box-shadow: 0 0 10px 1px "+iconColor+" inset;}";
+    $(document.head).append(style);
+
+    $(ele).addClass('timescale');
+    $(ele).html(totalSrc);
+
+    //初始化画布
+    var canvas = document.getElementById('timescale-main');
+    var width = that.containerWidth = parseFloat(ready.getStyle(canvas, 'width'));
+    var height = that.containerHeight = parseFloat(ready.getStyle(canvas, 'height'));
+    that.stage = new Konva.Stage({
+      container: 'timescale-main',
+      width: width,
+      height: height
+    });
+    //动态变化的图层
+    that.layer = new Konva.Layer();
+    //初始化不再改变的图层
+    that.staticLayer = new Konva.Layer();
+    that.stage.add(that.staticLayer, that.layer);
+  };
+
+  timescale.render = function(options) {
+    var inst = new Class(options);
+    return thisTimeScale.call(inst);
+  };
+
+  (typeof define === 'function' && define.amd) ? define(function(){ //requirejs加载
+    return timescale;
+  }) : function(){ //普通script标签加载
+    timescale.ready();
+    window.timescale = timescale;
+  }()
+})();
