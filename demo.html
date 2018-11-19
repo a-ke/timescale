@@ -47,10 +47,10 @@
     // timeScale.play();
     var time = 2000;
     timeScale.seekTo(1, time);
-    // setInterval(function() {
-    //   time += 1000;
-    //   timeScale.seekTo(1, time);
-    // }, 1000);
+    setInterval(function() {
+      time += 1000;
+      timeScale.seekTo(1, time);
+    }, 1000);
     timeScale.on('play', function() {
       console.log('play')
     })

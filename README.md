@@ -57,9 +57,34 @@ var timeLine = timescale.render({
 ![示例图片](./image/demo.png)
 
 ## 插件方法说明
-1. play()   
+1. timeLine.play()   
 控制插件工具条上的播放按钮切换为播放状态
-2. pause()   
+2. timeLine.pause()   
 控制插件工具条上的暂停按钮切换为暂停状态
-3. seekTo(time)   
+3. timeLine.seekTo(time)   
 控制游标移动到指定的时间，time为要跳转到的时间，单位为毫秒
+4. timeLine.on(event, callback)
+注册相应的监听事件
+5. timeLine.off(event, callback)
+移除相应的监听事件
+
+## 插件事件监听
+1. 播放事件
+```js
+timeLine.on('play', function() {
+  console.log('播放');
+});
+```
+2. 暂停事件
+```js
+timeLine.on('pause', function() {
+  console.log('暂停');
+});
+```
+3. 剪辑事件
+```js
+timeLine.on('clip', function(clipsArr, clippedArr) {
+  console.log(clipsArr); //需要保存的视频片段
+  console.log(clippedArr); //需要删除的视频片段
+});
+```
