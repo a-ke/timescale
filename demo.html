@@ -25,8 +25,14 @@
     // var timeScale = new TimeScale("timeScale");
     var sectionArr = [{
       id: 1,
-      duration: 612000
+      duration: 312000
       // duration: 10000
+    }, {
+      id: 2,
+      duration: 300000
+    }, {
+      id: 3,
+      duration: 10000
     }];
     var clipsArr = [{startTime: 0, endTime: 5000}, {startTime: 10000, endTime: 60000}, {startTime: 150000, endTime: 612000}];
     var timeScale = timescale.render({
@@ -38,13 +44,22 @@
       // iconColor: '#333'
     });
     // console.log(timeScale)
+    // timeScale.play();
     var time = 2000;
+    timeScale.seekTo(1, time);
     // setInterval(function() {
-    //   timeScale.seekTo(1, time);
     //   time += 1000;
+    //   timeScale.seekTo(1, time);
     // }, 1000);
     timeScale.on('play', function() {
       console.log('play')
+    })
+    timeScale.on('pause', function() {
+      console.log('pause')
+    })
+    timeScale.on('clip', function(clipsArr, clippedArr) {
+      console.log(clipsArr);
+      console.log(clippedArr)
     })
     // timeScale.timelineLoad();
   </script>

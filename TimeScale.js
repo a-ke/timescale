@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-17 16:33:18
+ * @Last Modified time: 2018-11-19 17:13:49
  */
 ;(function() {
   var ready = {
@@ -105,10 +105,11 @@
     ready: function(fn) {
       var cssname = 'timescale',
       path = 'css/timescale.css?v=' + timescale.v;
-      ready.link(path, function() {
+      ready.link(path, cssname);
+      // ready.link(path, function() {
         //引入依赖的konva.js文件
         ready.script('js/konva.min.js', fn, 'konva');
-      }, cssname);
+      // }, cssname);
     },
 
   }
@@ -811,7 +812,108 @@
         that.clippedArr.splice(index, 1);
       }
       that.konva.layer.draw();
-    })
+    });
+
+    //剪辑按钮事件
+    $('#timescale-clip').on('click', function() {
+      var clipsArr = [], clippedArr = [];
+      clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
+      clippedArr = that.findVideoSection(that.clippedArr);
+      
+      that.emit('clip', clipsArr, clippedArr);
+    });
+  };
+
+  //找出剪辑片段中包含的视频片段
+  //返回一个包含具体视频片段的数组
+  Class.prototype.findVideoSection = function(arr) {
+    var that = this;
+    var resultArr = [], clipsArr = arr, sectionArr = JSON.parse(JSON.stringify(that.config.sectionArr));
+    var clips_len = clipsArr.length, section_len = sectionArr.length;
+    for (var i = 0; i < clips_len; i++) {
+      for (var j = 0; j < section_len; j++) {
+        if (j === 0) {
+          sectionArr[j].startTime = 0;
+          sectionArr[j].endTime = sectionArr[j].duration
+        } else {
+          sectionArr[j].startTime = sectionArr[j-1].endTime;
+          sectionArr[j].endTime = sectionArr[j].startTime + sectionArr[j].duration;
+        }
+        if (clipsArr[i].startTime >= sectionArr[j].startTime && clipsArr[i].endTime <= sectionArr[j].endTime) {
+          //片段位于当前视频上
+          resultArr.push({
+            section: [{
+              id: sectionArr[j].id,
+              startTime: clipsArr[i].startTime - sectionArr[j].startTime,
+              endTime: clipsArr[i].endTime - sectionArr[j].startTime
+            }],
+            allStartTime: clipsArr[i].startTime,
+            allEndTime: clipsArr[i].endTime
+          });
+          break;
+        } else if (clipsArr[i].startTime >= sectionArr[j].startTime && clipsArr[i].endTime > sectionArr[j].endTime && sectionArr[j].endTime > clipsArr[i].startTime) {
+          //片段的前一部分在当前视频上
+          resultArr.push({
+            section: [{
+              id: sectionArr[j].id,
+              startTime: clipsArr[i].startTime - sectionArr[j].startTime,
+              endTime: sectionArr[j].duration
+            }],
+            allStartTime: clipsArr[i].startTime,
+            allEndTime: clipsArr[i].endTime
+          });
+        } else if (clipsArr[i].startTime < sectionArr[j].startTime && clipsArr[i].endTime <= sectionArr[j].endTime) {
+          //片段的后一部分在当前视频上
+          resultArr[resultArr.length - 1].section.push({
+            id: sectionArr[j].id,
+            startTime: 0,
+            endTime: clipsArr[i].endTime - sectionArr[j].startTime
+          });
+          break;
+        } else if (clipsArr[i].startTime < sectionArr[j].startTime && clipsArr[i].endTime > sectionArr[j].endTime) {
+          //片段的中间一部分在当前视频上
+          resultArr[resultArr.length - 1].section.push({
+            id: sectionArr[j].id,
+            startTime: 0,
+            endTime: sectionArr[j].duration
+          })
+        }
+      }
+    }
+    return resultArr;
+  };
+
+  //剪辑片段反选
+  Class.prototype.clippedReverse = function(clippedArr) {
+    var clipped_len = clippedArr.length;
+    var clipsArr = [];
+    for (var i = 0; i < clipped_len; i++) {
+      if (i === 0) {
+        if (clippedArr[i].startTime !== 0) {
+          //剪辑片段位于最开头
+          clipsArr.push({
+            startTime: 0,
+            endTime: clippedArr[i].startTime
+          });
+        }
+      }
+      if (i === clipped_len - 1) {
+        //剪辑片段位于最末尾
+        if (clippedArr[i].endTime !== this.aTotalTime) {
+          clipsArr.push({
+            startTime: clippedArr[i].endTime,
+            endTime: this.aTotalTime
+          });
+        }
+      }
+      if (i < clipped_len - 1) {
+        clipsArr.push({
+          startTime: clippedArr[i].endTime,
+          endTime: clippedArr[i+1].startTime
+        });
+      }
+    }
+    return clipsArr;
   };
 
   //剪辑开始的点
@@ -869,37 +971,56 @@
 
   //触发对应的事件
   Class.prototype.emit = function(event) {
+    var argu = [];
+    for (var i = 1, len = arguments.length; i < len; i++) {
+      argu.push(arguments[i]);
+    }
     if (this.eventListObj.hasOwnProperty(event)) {
       for (var i = 0, len = this.eventListObj[event].length; i < len; i++) {
-        this.eventListObj[event][i]();
+        this.eventListObj[event][i].apply(null, argu);
       }
     }
   };
+  
+  //等待插件初始化完毕
+  Class.prototype.wait = function(fun) {
+    var that = this;
+    (function poll() {
+      that.konva.layer ? fun() : setTimeout(poll, 100);
+    })();
+  }
   /******** 插件暴露在外的方法 start ***********/
   //设置播放进度
   Class.prototype.seekTo = function(id, time) {
-    var total = 0;
-    for(var i = 0, len = sectionArr.length; i < len; i++) {
-      if (id === sectionArr[i].id) {
-        total += time;
-        break;
-      } else {
-        total += sectionArr[i].duration;
+    var that = this;
+    this.wait(function() {
+      var total = 0;
+      for(var i = 0, len = sectionArr.length; i < len; i++) {
+        if (id === sectionArr[i].id) {
+          total += time;
+          break;
+        } else {
+          total += sectionArr[i].duration;
+        }
       }
-    }
-    this.currentTime = total;
-    this.drawCursor(this.konva.layer);
-    this.konva.layer.batchDraw();
+      that.currentTime = total;
+      that.drawCursor(that.konva.layer);
+      that.konva.layer.batchDraw();
+    })
   };
 
   //播放
   Class.prototype.play = function() {
-    $('#timescale-play .iconfont').removeClass('icon-bofang').addClass('icon-zanting');
+    this.wait(function() {
+      $('#timescale-play .iconfont').removeClass('icon-bofang').addClass('icon-zanting');
+    });
   };
 
   //暂停
   Class.prototype.pause = function() {
-    $('#timescale-play .iconfont').removeClass('icon-zanting').addClass('icon-bofang');
+    this.wait(function() {
+      $('#timescale-play .iconfont').removeClass('icon-zanting').addClass('icon-bofang');
+    });
   };
 
 
