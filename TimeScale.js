@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-20 13:31:18
+ * @Last Modified time: 2018-11-20 14:07:21
  */
 ;(function() {
   var ready = {
@@ -775,6 +775,23 @@
       }
     });
 
+    //预览按钮
+    $('#timescale-preview').on('click', function(e) {
+      var clipsArr = [], clippedArr = [];
+      var $iconfont = $(e.currentTarget).find('.iconfont');
+      if ($iconfont.hasClass('icon-yulan')) {
+        $iconfont.removeClass('icon-yulan');
+        $iconfont.addClass('icon-zanting');
+        clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
+        clippedArr = that.findVideoSection(that.clippedArr);
+        that.emit('previewStart', clipsArr, clippedArr);
+      } else {
+        $iconfont.removeClass('icon-zanting');
+        $iconfont.addClass('icon-yulan');
+        that.emit('previewStop');
+      }
+    });
+
     //放大按钮
     $('#timescale-zoomIn').on('click', function(e) {
       if (that.maxScale) {
@@ -1219,6 +1236,7 @@
       </div>\
       <div class='timescale-operation-group'>\
         <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>\
+        <span title='预览' id='timescale-preview'><i class='iconfont icon-yulan'></i></span>\
       </div>\
       <div class='timescale-operation-group'>\
         <span title='入点' id='timescale-clip-start'><i class='iconfont icon-rudian'></i></span>\
@@ -1265,6 +1283,7 @@
       that.currentTime = Math.round(clickTime) * 1000;
       that.drawCursor(that.konva.layer);
       that.konva.layer.draw();
+      that.emit('seekTo', that.currentTime);
     });
 
     //初始化剪辑片段组

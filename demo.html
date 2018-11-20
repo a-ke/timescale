@@ -60,6 +60,16 @@
     timeScale.on('clip', function(clipsArr, clippedArr) {
       console.log(clipsArr);
       console.log(clippedArr)
+    });
+    timeScale.on('seekTo', function(time) {
+      console.log(time)
+    })
+    timeScale.on('previewStart', function(clipsArr, clippedArr) {
+      console.log(clipsArr)
+      console.log(clippedArr)
+    })
+    timeScale.on('previewStop', function() {
+      console.log('previewStop')
     })
     // timeScale.timelineLoad();
   </script>

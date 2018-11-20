@@ -89,3 +89,16 @@ timeLine.on('clip', function(clipsArr, clippedArr) {
   console.log(clippedArr); //需要删除的视频片段
 });
 ```
+4. 单击移动游标事件
+```js
+timeLine.on('seekTo', function(currentTime) {
+  console.log(currentTime); //游标移动之后的时间
+})
+```
+5. 预览事件
+```js
+timeLine.on('previewStart', function(clipsArr, clippedArr) {
+  console.log(clipsArr); //当前需要保存的视频片段
+  console.log(clippedArr); //当前剪辑掉的视频片段
+});
+```
