@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-20 16:23:10
+ * @Last Modified time: 2018-11-20 19:37:49
  */
 ;(function() {
   var ready = {
@@ -125,6 +125,7 @@
       seekTo: that.seekTo.bind(that),
       play: that.play.bind(that),
       pause: that.pause.bind(that),
+      createIndex: that.createIndex.bind(that),
       on: that.on.bind(that),
       off: that.off.bind(that)
     };
@@ -145,6 +146,7 @@
       layer: null, //动态图层
       staticLayer: null, // 静态图层
       clipGroup: null, //剪辑片段分组
+      indexGroup: null, //索引分组
       delEle: [] //将要删除的元素
     };
     //事件队列(key为事件名，value为数组，数组内存放事件的回调函数)
@@ -160,6 +162,7 @@
     that.scale = 1;
     that.maxScale = false; //放大是否达到最大
     that.clippedArr = []; //剪掉的片段 [{startTime: 1000, endTime: 2000}]
+    that.indexArr = []; //索引 [1000, 2000, 3000]
     //m_n 代表一屏
     that.m_nBeginTime = 0;
     that.m_nTotalTime = 0;
@@ -641,7 +644,7 @@
           name: 'clip_' + i
         });
         rectRightZoom = new Konva.Rect({
-          x: start_x+width-6,
+          x: width-6,
           y: this.mainTopBottomMargin+20,
           width: 6,
           height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
@@ -836,6 +839,57 @@
     }
   };
 
+  //画索引
+  Class.prototype.drawIndex = function(layer) {
+    var m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
+    var line, start_x;
+    if (this.konva.indexGroup) {
+      this.konva.indexGroup.removeChildren();
+    }
+    for (var i = 0, len = this.indexArr.length; i < len; i++) {
+      if (this.indexArr[i] >= this.m_nBeginTime && this.indexArr[i] <= m_nEndTime) {
+        //位于可视区域内
+        start_x = (this.indexArr[i] - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
+        line = new Konva.Line({
+          points: [start_x, this.mainTopBottomMargin + 20, start_x, this.containerHeight - this.mainTopBottomMargin - 20],
+          stroke: '#ff6600',
+          strokeWidth: 4
+        });
+        this.konva.indexGroup.add(line);
+      }
+    }
+    layer.add(this.konva.indexGroup);
+  };
+
+  //绝对时间转相对时间
+  Class.prototype.absToRel = function(time) {
+    var sectionArr = this.config.sectionArr;
+    var section_start = 0, section_end;
+    for (var i = 0, len = sectionArr.length; i < len; i++) {
+      section_end = section_start + sectionArr[i].duration;
+      if (time >= section_start && time <= section_end) {
+        return {
+          id: sectionArr[i].id,
+          time: time - section_start,
+          absTime: time
+        };
+      }
+      section_start = section_end;
+    }
+  };
+
+  //相对时间转绝对时间
+  Class.prototype.relToAbs = function(id, time) {
+    var sectionArr = this.config.sectionArr;
+    var section_start = 0;
+    for (var i = 0, len = sectionArr.length; i < len; i++) {
+      if(id == sectionArr[i].id) {
+        return section_start + time;
+      }
+      section_start += sectionArr[i].duration;
+    }
+  };
+
   //插件内部事件初始化
   Class.prototype.eventInit = function() {
     var that = this;
@@ -894,6 +948,7 @@
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
       if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+      that.drawIndex(that.konva.layer);
       that.drawCursor(that.konva.layer);
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.draw();
@@ -927,6 +982,7 @@
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
       if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+      that.drawIndex(that.konva.layer);
       that.drawCursor(that.konva.layer);
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.draw();
@@ -956,6 +1012,7 @@
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
       if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+      that.drawIndex(that.konva.layer);
       that.drawCursor(that.konva.layer);
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.batchDraw();
@@ -965,7 +1022,8 @@
       mouse_start_x = e.clientX;
       old_x = parseFloat(ready.getStyle($('#timescale-scroll-bar')[0], 'left'));
       // $(document).on('mousemove', mousemove);
-      document.onmousemove = $.throttle(mousemove, 50);
+      // document.onmousemove = $.throttle(mousemove, 30);
+      document.onmousemove = mousemove;
     });
     $(document).on('mouseup', function(e) {
       // $(this).off('mousemove', mousemove);
@@ -1004,6 +1062,16 @@
       clippedArr = that.findVideoSection(that.clippedArr);
       
       that.emit('clip', clipsArr, clippedArr);
+    });
+
+    //创建索引事件
+    $('#timescale-index').on('click', function() {
+      var currentTime = that.currentTime;
+      that.indexArr.push(currentTime);
+      that.drawIndex(that.konva.layer);
+      that.konva.layer.draw();
+
+      that.emit('createIndex', that.absToRel(currentTime));
     });
   };
 
@@ -1206,6 +1274,16 @@
     });
   };
 
+  //添加索引
+  Class.prototype.createIndex = function(id, time) {
+    var that = this;
+    this.wait(function() {
+      that.indexArr.push(that.relToAbs(id, time));
+      that.drawIndex(that.konva.layer);
+      that.konva.layer.draw();
+    });
+  };
+
 
   //监听插件的事件
   Class.prototype.on = function(event, fun) {
@@ -1298,6 +1376,7 @@
     that.m_nTotalTime = that.aTotalTime;
     that.drawLineF(that.konva.layer);
     if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+    that.drawIndex(that.konva.layer);
     that.drawCursor(that.konva.layer);
 
     // that.clippedArr = [{startTime: 5000, endTime: 10000}, {startTime: 60000, endTime: 150000}];
@@ -1319,16 +1398,19 @@
         <span>总时长：<span class='total-time'>00:00:00</span></span>\
       </div>\
       <div class='timescale-operation-group'>\
-        <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>\
-        <span title='预览' id='timescale-preview'><i class='iconfont icon-yulan'></i></span>\
-      </div>\
-      <div class='timescale-operation-group'>\
-        <span title='入点' id='timescale-clip-start'><i class='iconfont icon-rudian'></i></span>\
+        <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>"
+        +(that.config.clipEnable ? "<span title='预览' id='timescale-preview'><i class='iconfont icon-yulan'></i></span>" : "") + 
+      "</div>"
+      + (that.config.clipEnable || that.config.indexEnable ? 
+      "<div class='timescale-operation-group'>"
+        + (that.config.clipEnable ?
+        "<span title='入点' id='timescale-clip-start'><i class='iconfont icon-rudian'></i></span>\
         <span title='出点' id='timescale-clip-end'><i class='iconfont icon-chudian'></i></span>\
-        <span title='剪辑' id='timescale-clip'><i class='iconfont icon-jianqie'></i></span>\
-        <span title='删除' id='timescale-del'><i class='iconfont icon-delete'></i></span>\
-      </div>\
-      <div class='timescale-operation-group'>\
+        <span title='剪辑' id='timescale-clip'><i class='iconfont icon-jianqie'></i></span>" : "") 
+        +(that.config.indexEnable ? "<span title='创建索引' id='timescale-index'><i class='iconfont icon-I'></i></span>" : "") +
+        "<span title='删除' id='timescale-del'><i class='iconfont icon-delete'></i></span>\
+      </div>" : "") +
+      "<div class='timescale-operation-group'>\
         <span title='放大' id='timescale-zoomIn'><i class='iconfont icon-fangda'></i></span>\
         <span title='缩小' id='timescale-zoomOut'><i class='iconfont icon-suoxiao'></i></span>\
       </div>\
@@ -1372,6 +1454,8 @@
 
     //初始化剪辑片段组
     this.konva.clipGroup = new Konva.Group();
+    //初始化索引组
+    this.konva.indexGroup = new Konva.Group();
     that.konva.stage.add(that.konva.staticLayer, that.konva.layer);
   };
 

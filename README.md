@@ -81,9 +81,11 @@ cursorColor | 插件游标的颜色 | string | '#FF6600' | 否
 控制插件工具条上的暂停按钮切换为暂停状态
 3. timeLine.seekTo(time)   
 控制游标移动到指定的时间，time为要跳转到的时间，单位为毫秒
-4. timeLine.on(event, callback)
+4. timeLine.createIndex(id, time)   
+创建索引。id为视频的唯一标识，time 为要创建的索引时间。
+5. timeLine.on(event, callback)
 注册相应的监听事件
-5. timeLine.off(event, callback)
+6. timeLine.off(event, callback)
 移除相应的监听事件
 
 ## 插件事件监听
@@ -118,4 +120,10 @@ timeLine.on('previewStart', function(clipsArr, clippedArr) {
   console.log(clipsArr); //当前需要保存的视频片段
   console.log(clippedArr); //当前剪辑掉的视频片段
 });
+```
+6. 索引创建事件
+```js
+timeLine.on('createIndex', function(result) {
+  console.log(result); // 所创建的索引信息（详情为result:{id: 1, time: 1000, absTime: 2000}）id为视频的唯一标志，time为相对于当前视频的时间点，absTime为相对于所有视频的时间点
+})
 ```

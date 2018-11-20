@@ -42,7 +42,9 @@
       ele: 'timeScale',
       sectionArr: sectionArr,
       clipsArr: clipsArr,
-      showSectionStatus: true
+      showSectionStatus: true,
+      indexEnable: true,
+      clipEnable: true,
       // backgroundColor: '#a0a0a0',
       // fontColor: '#333',
       // iconColor: '#333'
@@ -55,6 +57,7 @@
     //   time += 1000;
     //   timeScale.seekTo(1, time);
     // }, 1000);
+    timeScale.createIndex(1, 11000);
     timeScale.on('play', function() {
       console.log('play')
     })
@@ -74,6 +77,9 @@
     })
     timeScale.on('previewStop', function() {
       console.log('previewStop')
+    })
+    timeScale.on('createIndex', function(obj) {
+      console.log(obj)
     })
     // timeScale.timelineLoad();
   </script>
