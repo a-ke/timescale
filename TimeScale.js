@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-20 13:24:30
+ * @Last Modified time: 2018-11-20 13:31:18
  */
 ;(function() {
   var ready = {
@@ -705,7 +705,7 @@
           mouse_start_x = e.evt.clientX;
           function mousemove(e) {
             mouse_end_x = e.clientX;
-            var timeDiff = (mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime;
+            var timeDiff = Math.round((mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime);
             var index = name.split('_')[1];
             if (timeDiff + that.clippedArr[index].startTime >= that.clippedArr[index].endTime) {
               that.clippedArr[index].startTime = that.clippedArr[index].endTime;
@@ -739,7 +739,7 @@
           mouse_start_x = e.evt.clientX;
           function mousemove(e) {
             mouse_end_x = e.clientX;
-            var timeDiff = (mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime;
+            var timeDiff = Math.round((mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime);
             var index = name.split('_')[1];
             if (timeDiff + that.clippedArr[index].endTime <= that.clippedArr[index].startTime) {
               that.clippedArr[index].endTime = that.clippedArr[index].startTime;
