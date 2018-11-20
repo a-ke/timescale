@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-20 14:07:21
+ * @Last Modified time: 2018-11-20 14:30:58
  */
 ;(function() {
   var ready = {
@@ -765,6 +765,7 @@
     $('#timescale-play').on('click', function(e) {
       var $iconfont = $(e.currentTarget).find('.iconfont');
       if ($iconfont.hasClass('icon-bofang')) {
+        $('#timescale-preview').find('.iconfont').removeClass('icon-zanting').addClass('icon-yulan');
         $iconfont.removeClass('icon-bofang');
         $iconfont.addClass('icon-zanting');
         that.emit('play');
@@ -780,6 +781,7 @@
       var clipsArr = [], clippedArr = [];
       var $iconfont = $(e.currentTarget).find('.iconfont');
       if ($iconfont.hasClass('icon-yulan')) {
+        $('#timescale-play').find('.iconfont').removeClass('icon-zanting').addClass('icon-bofang');
         $iconfont.removeClass('icon-yulan');
         $iconfont.addClass('icon-zanting');
         clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
