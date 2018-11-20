@@ -51,6 +51,8 @@ var timeLine = timescale.render({
   sectionArr: sectionArr, //视频片段信息
   clipsArr: clipsArr, //视频剪辑片段信息
   // showSectionStatus: true, //是否显示视频的状态
+  // indexEnable: true, //是否开启索引功能
+  // clipEnable: true, //是否开启剪辑功能
   // backgroundColor: '#a0a0a0', //插件背景颜色（可选）
   // fontColor: '#333', //插件字体颜色（可选）
   // iconColor: '#333', //插件图标颜色和刻度颜色（可选）
@@ -64,6 +66,8 @@ ele | 插件要渲染的元素id | string | - | 是
 sectionArr | 视频片段信息 | array | - | 是
 clipsArr | 视频剪辑片段信息 | array | - | 是
 showSectionStatus | 是否显示视频的状态(当为true时，sectionArr中每个对象必须有一个status属性) | boolean | false | 否
+indexEnable | 是否开启索引功能 | boolean | false | 否
+clipEnabel | 是否开启剪辑功能 | boolean | false | 否
 backgroundColor | 插件背景颜色 | string | '#141F39' | 否
 fontColor | 插件上字体颜色 | string | '#fff' | 否
 iconColor | 插件上图标颜色和刻度颜色 | string | '#097DB1' | 否
