@@ -49,7 +49,8 @@ var timeLine = timescale.render({
   clipsArr: clipsArr, //视频剪辑片段信息
   // backgroundColor: '#a0a0a0', //插件背景颜色（可选）
   // fontColor: '#333', //插件字体颜色（可选）
-  // iconColor: '#333' //插件图标颜色和刻度颜色（可选）
+  // iconColor: '#333', //插件图标颜色和刻度颜色（可选）
+  // cursorColor: '#FF6600' //插件游标的颜色（可选）
 });
 ```
 3. 初始化完成后，插件效果如下：   

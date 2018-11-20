@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-19 17:13:49
+ * @Last Modified time: 2018-11-20 13:24:30
  */
 ;(function() {
   var ready = {
@@ -564,11 +564,13 @@
     }
   };
 
+  //绘制剪辑掉的片段
   Class.prototype.drawClipBlock = function(layer) {
     var that = this;
     var arr = this.clippedArr;
     var m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
-    var rect, rectLeftLine, rectRightLine, start_x, width;
+    var rect, rectLeftLine, rectRightLine, rectLeftZoom, rectRightZoom, start_x, width;
+    var mouse_start_x, mouse_end_x;
     if (this.konva.clipGroup) {
       //重置剪辑片段
       this.konva.clipGroup.removeChildren();
@@ -591,15 +593,30 @@
         });
         //画左右边界线
         rectLeftLine = new Konva.Line({
-          points: [start_x+4, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+4, this.containerHeight-this.mainTopBottomMargin-20],
+          points: [start_x+6, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+6, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
           strokeWidth: 2,
           name: 'clip_' + i
         });
         rectRightLine = new Konva.Line({
-          points: [start_x+width-4, this.mainTopBottomMargin+20, start_x+width, this.mainTopBottomMargin+20, start_x+width, this.containerHeight-this.mainTopBottomMargin-20, start_x+width-4, this.containerHeight-this.mainTopBottomMargin-20],
+          points: [start_x+width-6, this.mainTopBottomMargin+20, start_x+width, this.mainTopBottomMargin+20, start_x+width, this.containerHeight-this.mainTopBottomMargin-20, start_x+width-6, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
           strokeWidth: 2,
+          name: 'clip_' + i
+        });
+        //鼠标感应区域
+        rectLeftZoom = new Konva.Rect({
+          x: start_x,
+          y: this.mainTopBottomMargin+20,
+          width: 6,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+          name: 'clip_' + i
+        });
+        rectRightZoom = new Konva.Rect({
+          x: start_x+width-6,
+          y: this.mainTopBottomMargin+20,
+          width: 6,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
           name: 'clip_' + i
         });
       } else if (arr[i].startTime < this.m_nBeginTime) {
@@ -618,9 +635,16 @@
         });
         //画右边的边界线
         rectRightLine = new Konva.Line({
-          points: [width-4, this.mainTopBottomMargin+20, width, this.mainTopBottomMargin+20, width, this.containerHeight-this.mainTopBottomMargin-20, width-4, this.containerHeight-this.mainTopBottomMargin-20],
+          points: [width-6, this.mainTopBottomMargin+20, width, this.mainTopBottomMargin+20, width, this.containerHeight-this.mainTopBottomMargin-20, width-6, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
           strokeWidth: 2,
+          name: 'clip_' + i
+        });
+        rectRightZoom = new Konva.Rect({
+          x: start_x+width-6,
+          y: this.mainTopBottomMargin+20,
+          width: 6,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
           name: 'clip_' + i
         });
       } else if (arr[i].endTime > m_nEndTime) {
@@ -640,17 +664,19 @@
         });
         //画左边的边界线
         rectLeftLine = new Konva.Line({
-          points: [start_x+4, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+4, this.containerHeight-this.mainTopBottomMargin-20],
+          points: [start_x+6, this.mainTopBottomMargin+20, start_x, this.mainTopBottomMargin+20, start_x, this.containerHeight-this.mainTopBottomMargin-20, start_x+6, this.containerHeight-this.mainTopBottomMargin-20],
           stroke: 'red',
           strokeWidth: 2,
           name: 'clip_' + i
         });
-      }
-      if (rectLeftLine) {
-        this.konva.clipGroup.add(rectLeftLine);
-      }
-      if (rectRightLine) {
-        this.konva.clipGroup.add(rectRightLine);
+        //鼠标感应区域
+        rectLeftZoom = new Konva.Rect({
+          x: start_x,
+          y: this.mainTopBottomMargin+20,
+          width: 6,
+          height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+          name: 'clip_' + i
+        });
       }
       //单击选中相应的剪辑片段
       rect.on('click', function(e) {
@@ -671,6 +697,63 @@
         that.konva.layer.draw();
       });
       this.konva.clipGroup.add(rect);
+
+      if (rectLeftLine) {
+        //左边边界区域的鼠标感应事件
+        rectLeftZoom.on('mousedown', function(e) {
+          var name = this.getName();
+          mouse_start_x = e.evt.clientX;
+          function mousemove(e) {
+            mouse_end_x = e.clientX;
+            var timeDiff = (mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime;
+            var index = name.split('_')[1];
+            if (timeDiff + that.clippedArr[index].startTime >= that.clippedArr[index].endTime) {
+              that.clippedArr[index].startTime = that.clippedArr[index].endTime;
+            } else {
+              that.clippedArr[index].startTime += timeDiff;
+            }
+            that.drawClipBlock(that.konva.layer);
+            that.konva.layer.batchDraw();
+            mouse_start_x = mouse_end_x;
+          }
+          document.onmousemove = mousemove;
+        });
+        rectLeftZoom.on('mouseover', function() {
+          document.body.style.cursor = 'e-resize';
+        });
+        rectLeftZoom.on('mouseout', function() {
+          document.body.style.cursor = 'default';
+        });
+        this.konva.clipGroup.add(rectLeftLine, rectLeftZoom);
+      }
+      if (rectRightLine) {
+        //右边边界区域的鼠标感应事件
+        rectRightZoom.on('mouseover', function() {
+          document.body.style.cursor = 'e-resize';
+        });
+        rectRightZoom.on('mouseout', function() {
+          document.body.style.cursor = 'default';
+        });
+        rectRightZoom.on('mousedown', function(e) {
+          var name = this.getName();
+          mouse_start_x = e.evt.clientX;
+          function mousemove(e) {
+            mouse_end_x = e.clientX;
+            var timeDiff = (mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime;
+            var index = name.split('_')[1];
+            if (timeDiff + that.clippedArr[index].endTime <= that.clippedArr[index].startTime) {
+              that.clippedArr[index].endTime = that.clippedArr[index].startTime;
+            } else {
+              that.clippedArr[index].endTime += timeDiff;
+            }
+            that.drawClipBlock(that.konva.layer);
+            that.konva.layer.batchDraw();
+            mouse_start_x = mouse_end_x;
+          }
+          document.onmousemove = mousemove;
+        });
+        this.konva.clipGroup.add(rectRightLine, rectRightZoom);
+      }
     }
     layer.add(this.konva.clipGroup);
   };
