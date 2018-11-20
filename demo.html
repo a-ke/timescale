@@ -25,20 +25,24 @@
     // var timeScale = new TimeScale("timeScale");
     var sectionArr = [{
       id: 1,
-      duration: 312000
+      duration: 312000,
+      status: true
       // duration: 10000
     }, {
       id: 2,
-      duration: 300000
+      duration: 300000,
+      status: false
     }, {
       id: 3,
-      duration: 10000
+      duration: 10000,
+      status: true
     }];
     var clipsArr = [{startTime: 0, endTime: 5000}, {startTime: 10000, endTime: 60000}, {startTime: 150000, endTime: 612000}];
     var timeScale = timescale.render({
       ele: 'timeScale',
       sectionArr: sectionArr,
       clipsArr: clipsArr,
+      showSectionStatus: true
       // backgroundColor: '#a0a0a0',
       // fontColor: '#333',
       // iconColor: '#333'

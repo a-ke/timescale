@@ -25,13 +25,16 @@ import 'timescale/TimeScale.js'
 ```javascript
 var sectionArr = [{
   id: 1, //视频id,唯一标识
-  duration: 312000 //当前视频的时长
+  duration: 312000, //当前视频的时长
+  // status: true //表示该视频是否存在
 }, {
   id: 2,
-  duration: 300000
+  duration: 300000,
+  // status: false
 }, {
   id: 3,
-  duration: 10000
+  duration: 10000,
+  // status: true
 }];
 var clipsArr = [{
   startTime: 0,  //剪辑片段的开始时间
@@ -47,12 +50,26 @@ var timeLine = timescale.render({
   ele: 'timescale', //插件要渲染的元素的id
   sectionArr: sectionArr, //视频片段信息
   clipsArr: clipsArr, //视频剪辑片段信息
+  // showSectionStatus: true, //是否显示视频的状态
   // backgroundColor: '#a0a0a0', //插件背景颜色（可选）
   // fontColor: '#333', //插件字体颜色（可选）
   // iconColor: '#333', //插件图标颜色和刻度颜色（可选）
   // cursorColor: '#FF6600' //插件游标的颜色（可选）
 });
 ```
+### render函数中配置项说明
+属性名 | 说明 | 类型 | 默认值 | 必选
+--- | --- | --- | :-: | --- |
+ele | 插件要渲染的元素id | string | - | 是
+sectionArr | 视频片段信息 | array | - | 是
+clipsArr | 视频剪辑片段信息 | array | - | 是
+showSectionStatus | 是否显示视频的状态(当为true时，sectionArr中每个对象必须有一个status属性) | boolean | false | 否
+backgroundColor | 插件背景颜色 | string | '#141F39' | 否
+fontColor | 插件上字体颜色 | string | '#fff' | 否
+iconColor | 插件上图标颜色和刻度颜色 | string | '#097DB1' | 否
+cursorColor | 插件游标的颜色 | string | '#FF6600' | 否
+
+
 3. 初始化完成后，插件效果如下：   
 
 ![示例图片](./image/demo.png)

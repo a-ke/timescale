@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-20 14:30:58
+ * @Last Modified time: 2018-11-20 16:23:10
  */
 ;(function() {
   var ready = {
@@ -92,7 +92,7 @@
   ,timescale = {
     v: '1.0.0',
     config: {}, //全局配置项
-    path: ready.getPath,
+    path: !window.Konva ? ready.getPath : '',
     
     //设置全局项
     set: function(options) {
@@ -758,6 +758,84 @@
     layer.add(this.konva.clipGroup);
   };
 
+  //绘制无录像的状态展示
+  Class.prototype.drawNoVideoBlock = function(layer) {
+    var sectionArr = this.config.sectionArr;
+    var rect, start_x, width, text;
+    var m_nBeginTime = this.m_nBeginTime,
+    m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
+    m_nTotalTime = this.m_nTotalTime;
+    var section_start = 0, section_end;
+    for (var i = 0, len = sectionArr.length; i < len; i++) {
+      //片段结束时间
+      section_end = section_start + sectionArr[i].duration;
+      if (!sectionArr[i].status) {
+        //当该段时间无录像时
+        if (section_start >= m_nBeginTime && section_end <= m_nEndTime) {
+          //完全在可视范围内
+          start_x = (section_start - m_nBeginTime) / m_nTotalTime * this.containerWidth;
+          width = sectionArr[i].duration / m_nTotalTime * this.containerWidth;
+          rect = new Konva.Rect({
+            x: start_x,
+            y:  this.mainTopBottomMargin + 20,
+            width: width,
+            height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+            fill: 'rgba(10, 10, 10, 0.8)'
+          })
+        } else if (section_start < m_nBeginTime && section_end > m_nBeginTime && section_end <= m_nEndTime) {
+          //后半段在可视范围内
+          start_x = 0;
+          width = (section_end - m_nBeginTime) / m_nTotalTime * this.containerWidth;
+          rect = new Konva.Rect({
+            x: start_x,
+            y: this.mainTopBottomMargin + 20,
+            width: width,
+            height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+            fill: 'rgba(10, 10, 10, 0.8)'
+          });
+        } else if (section_start >= m_nBeginTime && section_start < m_nEndTime && section_end > m_nEndTime) {
+          //前半段在可视范围内
+          start_x = (section_start - m_nBeginTime) / m_nTotalTime * this.containerWidth;
+          width = this.containerWidth - start_x;
+          rect = new Konva.Rect({
+            x: start_x,
+            y: this.mainTopBottomMargin + 20,
+            width: width,
+            height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+            fill: 'rgba(10, 10, 10, 0.8)'
+          });
+        } else if (section_start < m_nBeginTime && section_end > m_nEndTime) {
+          //只有中间一部分在可视范围内
+          start_x = 0;
+          width = this.containerWidth;
+          rect = new Konva.Rect({
+            x: start_x,
+            y: this.mainTopBottomMargin + 20,
+            width: width,
+            height: this.containerHeight - this.mainTopBottomMargin * 2 - 40,
+            fill: 'rgba(10, 10, 10, 0.8)'
+          });
+        }
+        if (rect) {
+          layer.add(rect);
+        }
+        if (width > 50) {
+          //增加文字提示
+          text = new Konva.Text({
+            x: start_x + width / 2 - 25,
+            y: this.containerHeight / 2 - 8,
+            text: '无录像',
+            fontSize: 16,
+            fill: fontColor
+          });
+          layer.add(text);
+        }
+      }
+      //下个片段开始时间
+      section_start = section_end;
+    }
+  };
+
   //插件内部事件初始化
   Class.prototype.eventInit = function() {
     var that = this;
@@ -815,6 +893,7 @@
       //重置刻度层
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
+      if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
       that.drawCursor(that.konva.layer);
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.draw();
@@ -847,6 +926,7 @@
       //重置刻度层
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
+      if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
       that.drawCursor(that.konva.layer);
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.draw();
@@ -875,6 +955,7 @@
       that.m_nBeginTime = that.aTotalTime * scroll_left / 100;
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
+      if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
       that.drawCursor(that.konva.layer);
       that.drawClipBlock(that.konva.layer);
       that.konva.layer.batchDraw();
@@ -1216,6 +1297,7 @@
 
     that.m_nTotalTime = that.aTotalTime;
     that.drawLineF(that.konva.layer);
+    if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
     that.drawCursor(that.konva.layer);
 
     // that.clippedArr = [{startTime: 5000, endTime: 10000}, {startTime: 60000, endTime: 150000}];
