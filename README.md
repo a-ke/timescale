@@ -65,7 +65,7 @@ var timeLine = timescale.render({
 --- | --- | --- | :-: | --- |
 ele | 插件要渲染的元素id | string | - | 是
 sectionArr | 视频片段信息(格式要求见已上的使用例子) | array | - | 是
-clipsArr | 视频剪辑片段信息(格式要求见已上的使用例子) | array | - | 是
+clipsArr | 视频剪辑片段信息(格式要求见已上的使用例子) | array | - | 否
 showSectionStatus | 是否显示视频的状态(当为true时，sectionArr中每个对象必须有一个status属性) | boolean | false | 否
 indexEnable | 是否开启索引功能 | boolean | false | 否
 clipEnabel | 是否开启剪辑功能 | boolean | false | 否
