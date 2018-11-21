@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-20 19:37:49
+ * @Last Modified time: 2018-11-21 09:31:20
  */
 ;(function() {
   var ready = {
@@ -147,7 +147,7 @@
       staticLayer: null, // 静态图层
       clipGroup: null, //剪辑片段分组
       indexGroup: null, //索引分组
-      delEle: [] //将要删除的元素
+      delClipEle: [] //将要删除的剪辑元素
     };
     //事件队列(key为事件名，value为数组，数组内存放事件的回调函数)
     that.eventListObj = {};
@@ -691,11 +691,11 @@
         if (this.checked === false) {
           this.checked = true;
           this.setAttr('fill', 'rgba(100, 0, 0, 0.6)');
-          that.konva.delEle.push('.' + className);
+          that.konva.delClipEle.push('.' + className);
         } else if (this.checked === true) {
           this.checked = false;
           this.setAttr('fill', 'rgba(255, 0, 0, 0.4)');
-          that.konva.delEle.splice(that.konva.delEle.indexOf('.' + className), 1);
+          that.konva.delClipEle.splice(that.konva.delClipEle.indexOf('.' + className), 1);
         }
         that.konva.layer.draw();
       });
@@ -1047,9 +1047,9 @@
     //删除选中剪辑片段
     $('#timescale-del').on('click', function() {
       var index = 0;
-      for (var i = 0, len = that.konva.delEle.length; i < len; i++) {
-        index = that.konva.delEle[i].split('_')[1];
-        that.konva.layer.find(that.konva.delEle[i]).remove();
+      for (var i = 0, len = that.konva.delClipEle.length; i < len; i++) {
+        index = that.konva.delClipEle[i].split('_')[1];
+        that.konva.layer.find(that.konva.delClipEle[i]).remove();
         that.clippedArr.splice(index, 1);
       }
       that.konva.layer.draw();
@@ -1215,7 +1215,7 @@
     if (i === len) {
       this.clippedArr.push({
         startTime: this.clippedArr[len - 1].endTime,
-        endTime: this.aTotalTime
+        endTime: currentTime
       });
     }
   }
@@ -1449,7 +1449,7 @@
       that.currentTime = Math.round(clickTime) * 1000;
       that.drawCursor(that.konva.layer);
       that.konva.layer.draw();
-      that.emit('seekTo', that.currentTime);
+      that.emit('seekTo', that.absToRel(that.currentTime));
     });
 
     //初始化剪辑片段组

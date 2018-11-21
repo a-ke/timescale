@@ -19,6 +19,7 @@ import 'timescale/TimeScale.js'
 ## 使用说明
 1. 首先在html中设置一个div，如下：
 ```html
+<!-- 推荐容器高度为200px -->
 <div id='timescale'></div>
 ```
 2. 使用<mark>render</mark>函数初始化
@@ -114,8 +115,15 @@ timeLine.on('clip', function(clipsArr, clippedArr) {
 ```
 4. 单击移动游标事件
 ```js
-timeLine.on('seekTo', function(currentTime) {
-  console.log(currentTime); //游标移动之后的时间
+timeLine.on('seekTo', function(time) {
+  console.log(time); //游标移动之后的时间
+  /*
+  time: {
+    id: 1, //视频的唯一标志
+    time: 1000, //相对于当前视频的时间点
+    absTime: 2000 //相对于所有视频的时间点
+  }
+  */
 })
 ```
 5. 预览事件
@@ -127,7 +135,14 @@ timeLine.on('previewStart', function(clipsArr, clippedArr) {
 ```
 6. 索引创建事件
 ```js
-timeLine.on('createIndex', function(result) {
-  console.log(result); // 所创建的索引信息（详情为result:{id: 1, time: 1000, absTime: 2000}）id为视频的唯一标志，time为相对于当前视频的时间点，absTime为相对于所有视频的时间点
+timeLine.on('createIndex', function(time) {
+  console.log(time); // 所创建的索引信息
+  /*
+  time: {
+    id: 1, //视频的唯一标志
+    time: 1000, //相对于当前视频的时间点
+    absTime: 2000 //相对于所有视频的时间点
+  }
+  */
 })
 ```
