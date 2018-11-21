@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-21 13:31:43
+ * @Last Modified time: 2018-11-21 16:06:33
  */
 ;(function() {
   var ready = {
@@ -103,13 +103,17 @@
 
     //主体css等待事件
     ready: function(fn) {
-      var cssname = 'timescale',
-      path = 'css/timescale.css?v=' + timescale.v;
-      ready.link(path, cssname);
-      // ready.link(path, function() {
-        //引入依赖的konva.js文件
-        ready.script('js/konva.min.js', fn, 'konva');
-      // }, cssname);
+      if (!window.Konva) {
+        var cssname = 'timescale',
+        path = 'css/timescale.css?v=' + timescale.v;
+        ready.link(path, cssname);
+        // ready.link(path, function() {
+          //引入依赖的konva.js文件
+          ready.script('js/konva.min.js', fn, 'konva');
+        // }, cssname);
+      } else if (typeof fn === 'function') {
+        fn();
+      }
     },
 
   }
@@ -556,7 +560,7 @@
       //游标在可视区域
       var arrow_x = (currentTime - this.m_nBeginTime) / this.m_nTotalTime * this.containerWidth;
       this.arrow = new Konva.Arrow({
-        points: [arrow_x, 1, arrow_x, this.containerHeight - 1],
+        points: [arrow_x, 1, arrow_x, this.containerHeight - 2],
         pointerLength: 15,
         pointerWidth : 15,
         fill: cursorColor,
@@ -768,7 +772,7 @@
     var sectionArr = this.config.sectionArr;
     var rect, start_x, width, text;
     var m_nBeginTime = this.m_nBeginTime,
-    m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
+    m_nEndTime = this.m_nBeginTime + this.m_nTotalTime,
     m_nTotalTime = this.m_nTotalTime;
     var section_start = 0, section_end;
     for (var i = 0, len = sectionArr.length; i < len; i++) {
@@ -1540,10 +1544,6 @@
     return thisTimeScale.call(inst);
   };
 
-  (typeof define === 'function' && define.amd) ? define(function(){ //requirejs加载
-    return timescale;
-  }) : function(){ //普通script标签加载
-    timescale.ready();
-    window.timescale = timescale;
-  }()
+  window.timescale = timescale;
+  timescale.ready();
 })();
