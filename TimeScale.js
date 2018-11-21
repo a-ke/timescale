@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-21 10:48:58
+ * @Last Modified time: 2018-11-21 13:29:12
  */
 ;(function() {
   var ready = {
@@ -122,6 +122,7 @@
     var that = this;
     return {
       config: that.config,
+      reload: that.reload.bind(that),
       seekTo: that.seekTo.bind(that),
       play: that.play.bind(that),
       pause: that.pause.bind(that),
@@ -1067,32 +1068,27 @@
     //删除选中剪辑片段
     $('#timescale-del').on('click', function() {
       var index = 0;
+      var delClipArr = [], delIndexArr = [];
       for (var i = 0, len = that.konva.delClipEle.length; i < len; i++) {
         index = that.konva.delClipEle[i].split('_')[1];
-        that.clippedArr.splice(index, 1);
-        // that.konva.layer.find(that.konva.delClipEle[i]).remove();
-        //重置刻度层
-        that.konva.layer.removeChildren();
-        that.drawLineF(that.konva.layer);
-        if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
-        that.drawIndex(that.konva.layer);
-        that.drawCursor(that.konva.layer);
-        that.drawClipBlock(that.konva.layer);
-        that.konva.layer.draw();
+        delClipArr.push(Number(index));
       }
       for (var i = 0, len = that.konva.delIndexEle.length; i < len; i++) {
         index = that.konva.delIndexEle[i].split('_')[1];
         that.emit('delIndex', that.absToRel(that.indexArr[index]));
-        that.indexArr.splice(index, 1);
-        // that.konva.layer.find(that.konva.delIndexEle[i]).remove();
-        //重置刻度层
-        that.konva.layer.removeChildren();
-        that.drawLineF(that.konva.layer);
-        if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
-        that.drawIndex(that.konva.layer);
-        that.drawCursor(that.konva.layer);
+        delIndexArr.push(Number(index));
+      }
+      if (that.konva.delClipEle.lenght > 0) {
+        that.clippedArr = that.clippedArr.filter(function(currentValue, index) {
+          return delClipArr.indexOf(index) === -1;
+        });
         that.drawClipBlock(that.konva.layer);
-        that.konva.layer.draw();
+      }
+      if (that.konva.delIndexEle.length > 0) {
+        that.indexArr = that.indexArr.filter(function(currentValue, index) {
+          return delIndexArr.indexOf(index) === -1;
+        });
+        that.drawIndex(that.konva.layer);
       }
       that.konva.layer.draw();
       that.konva.delClipEle = [];
@@ -1288,6 +1284,23 @@
     })();
   }
   /******** 插件暴露在外的方法 start ***********/
+  //重新加载时间轴
+  Class.prototype.reload = function(sectionArr, clipsArr) {
+    var that = this;
+    this.wait(function() {
+      that.clippedArr = [];
+      that.indexArr = [];
+      that.konva.layer.removeChildren();
+      that.konva.staticLayer.removeChildren();
+      that.konva.delClipEle = [];
+      that.konva.delIndexEle = [];
+      that.scale = 1;
+      $('#timescale-scroll-bar').css('width', '100%').css('left', '0');
+      $('#timescale-play').find('.iconfont').removeClass('icon-zanting').addClass('icon-bofang');
+      $('#timescale-preview').find('.iconfont').removeClass('icon-zanting').addClass('icon-yulan');
+      that.timelineLoad(sectionArr, clipsArr);
+    });
+  }
   //设置播放进度
   Class.prototype.seekTo = function(id, time) {
     var that = this;
@@ -1380,7 +1393,7 @@
     var ele = document.getElementById('timescale-main');
     var width = that.containerWidth = parseFloat(ready.getStyle(ele, 'width'));
     var height = that.containerHeight = parseFloat(ready.getStyle(ele, 'height'));
-    var totalTime = 0, currentTime = 0; //totalTime和currentTime单位是毫秒
+    var totalTime = 0; 
 
     //计算总时间
     for (var i = 0, len = sectionArr.length; i < len; i++) {
@@ -1390,12 +1403,27 @@
     $('.timescale .total-time').html($.msToHMS(totalTime));
 
     //计算被剪切掉的片段
-    for (var i = 0, len = clipsArr.length - 1; i < len; i++) {
-      if (clipsArr[i].endTime < clipsArr[i+1].startTime) {
-        that.clippedArr.push({
-          startTime: clipsArr[i].endTime,
-          endTime: clipsArr[i+1].startTime
-        });
+    if (Array.isArray(clipsArr)) {
+      for (var i = 0, len = clipsArr.length - 1; i < len; i++) {
+        if (clipsArr[i].endTime < clipsArr[i+1].startTime) {
+          that.clippedArr.push({
+            startTime: clipsArr[i].endTime,
+            endTime: clipsArr[i+1].startTime
+          });
+        }
+      }
+      if (clipsArr.length == 1) {
+        if (clipsArr[0].startTime > 0) {
+          that.clippedArr.push({
+            startTime: 0,
+            endTime: clipsArr[0].startTime
+          });
+        } else {
+          that.clippedArr.push({
+            startTime: clipsArr[0].endTime,
+            endTime: totalTime
+          });
+        }
       }
     }
 
