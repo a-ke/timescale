@@ -64,8 +64,8 @@ var timeLine = timescale.render({
 属性名 | 说明 | 类型 | 默认值 | 必选
 --- | --- | --- | :-: | --- |
 ele | 插件要渲染的元素id | string | - | 是
-sectionArr | 视频片段信息 | array | - | 是
-clipsArr | 视频剪辑片段信息 | array | - | 是
+sectionArr | 视频片段信息(格式要求见已上的使用例子) | array | - | 是
+clipsArr | 视频剪辑片段信息(格式要求见已上的使用例子) | array | - | 是
 showSectionStatus | 是否显示视频的状态(当为true时，sectionArr中每个对象必须有一个status属性) | boolean | false | 否
 indexEnable | 是否开启索引功能 | boolean | false | 否
 clipEnabel | 是否开启剪辑功能 | boolean | false | 否
@@ -86,12 +86,14 @@ cursorColor | 插件游标的颜色 | string | '#FF6600' | 否
 控制插件工具条上的暂停按钮切换为暂停状态
 3. timeLine.seekTo(time)   
 控制游标移动到指定的时间，time为要跳转到的时间，单位为毫秒
-4. timeLine.createIndex(id, time)   
+4. timeLine.createIndex(id, time)      
 创建索引。id为视频的唯一标识，time 为要创建的索引时间。
-5. timeLine.on(event, callback)
+5. timeLine.on(event, callback)   
 注册相应的监听事件
-6. timeLine.off(event, callback)
+6. timeLine.off(event, callback)   
 移除相应的监听事件
+7. timeLine.reload(sectionArr, clipsArr)    
+重新加载时间轴，sectionArr为视频片段的信息，clipsArr为剪辑后片段的信息
 
 ## 插件事件监听
 1. 播放事件
@@ -137,6 +139,19 @@ timeLine.on('previewStart', function(clipsArr, clippedArr) {
 ```js
 timeLine.on('createIndex', function(time) {
   console.log(time); // 所创建的索引信息
+  /*
+  time: {
+    id: 1, //视频的唯一标志
+    time: 1000, //相对于当前视频的时间点
+    absTime: 2000 //相对于所有视频的时间点
+  }
+  */
+})
+```
+7. 索引删除事件
+```js
+timeLine.on('delIndex', function(time) {
+  console.log(time); //删除的索引信息
   /*
   time: {
     id: 1, //视频的唯一标志
