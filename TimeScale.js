@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-21 09:31:20
+ * @Last Modified time: 2018-11-21 10:48:58
  */
 ;(function() {
   var ready = {
@@ -147,7 +147,8 @@
       staticLayer: null, // 静态图层
       clipGroup: null, //剪辑片段分组
       indexGroup: null, //索引分组
-      delClipEle: [] //将要删除的剪辑元素
+      delClipEle: [], //将要删除的剪辑元素
+      delIndexEle: [] //将要删除的索引元素
     };
     //事件队列(key为事件名，value为数组，数组内存放事件的回调函数)
     that.eventListObj = {};
@@ -839,8 +840,9 @@
     }
   };
 
-  //画索引
+  //绘制索引
   Class.prototype.drawIndex = function(layer) {
+    var that = this;
     var m_nEndTime = this.m_nBeginTime + this.m_nTotalTime;
     var line, start_x;
     if (this.konva.indexGroup) {
@@ -853,7 +855,25 @@
         line = new Konva.Line({
           points: [start_x, this.mainTopBottomMargin + 20, start_x, this.containerHeight - this.mainTopBottomMargin - 20],
           stroke: '#ff6600',
-          strokeWidth: 4
+          strokeWidth: 4,
+          name: 'index_' + i
+        });
+        line.on('click', function() {
+          //索引点击事件
+          var name = this.getName();
+          if (!this.hasOwnProperty('checked')) {
+            this.checked = false;
+          }
+          if (this.checked) {
+            this.setAttr('stroke', '#ff6600');
+            this.checked = false;
+            that.konva.delIndexEle.splice(that.konva.delIndexEle.indexOf('.' + name), 1);
+          } else {
+            this.setAttr('stroke', '#ff9900');
+            this.checked = true;
+            that.konva.delIndexEle.push('.' + name);
+          }
+          layer.draw();
         });
         this.konva.indexGroup.add(line);
       }
@@ -1049,10 +1069,34 @@
       var index = 0;
       for (var i = 0, len = that.konva.delClipEle.length; i < len; i++) {
         index = that.konva.delClipEle[i].split('_')[1];
-        that.konva.layer.find(that.konva.delClipEle[i]).remove();
         that.clippedArr.splice(index, 1);
+        // that.konva.layer.find(that.konva.delClipEle[i]).remove();
+        //重置刻度层
+        that.konva.layer.removeChildren();
+        that.drawLineF(that.konva.layer);
+        if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+        that.drawIndex(that.konva.layer);
+        that.drawCursor(that.konva.layer);
+        that.drawClipBlock(that.konva.layer);
+        that.konva.layer.draw();
+      }
+      for (var i = 0, len = that.konva.delIndexEle.length; i < len; i++) {
+        index = that.konva.delIndexEle[i].split('_')[1];
+        that.emit('delIndex', that.absToRel(that.indexArr[index]));
+        that.indexArr.splice(index, 1);
+        // that.konva.layer.find(that.konva.delIndexEle[i]).remove();
+        //重置刻度层
+        that.konva.layer.removeChildren();
+        that.drawLineF(that.konva.layer);
+        if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+        that.drawIndex(that.konva.layer);
+        that.drawCursor(that.konva.layer);
+        that.drawClipBlock(that.konva.layer);
+        that.konva.layer.draw();
       }
       that.konva.layer.draw();
+      that.konva.delClipEle = [];
+      that.konva.delIndexEle = [];
     });
 
     //剪辑按钮事件
@@ -1067,6 +1111,9 @@
     //创建索引事件
     $('#timescale-index').on('click', function() {
       var currentTime = that.currentTime;
+      if (that.indexArr.indexOf(currentTime) > -1) {
+        return;
+      }
       that.indexArr.push(currentTime);
       that.drawIndex(that.konva.layer);
       that.konva.layer.draw();
