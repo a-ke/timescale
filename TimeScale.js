@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-21 13:29:12
+ * @Last Modified time: 2018-11-21 13:31:43
  */
 ;(function() {
   var ready = {
@@ -1288,6 +1288,7 @@
   Class.prototype.reload = function(sectionArr, clipsArr) {
     var that = this;
     this.wait(function() {
+      that.currentTime = 0;
       that.clippedArr = [];
       that.indexArr = [];
       that.konva.layer.removeChildren();
