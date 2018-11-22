@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 10:31:32
+ * @Last Modified time: 2018-11-22 10:43:15
  */
 ;(function() {
   var ready = {
@@ -956,6 +956,9 @@
       if (that.maxScale) {
         return;
       }
+      if (that.scale === 128) {
+        return;
+      }
       that.scale *= 2;
       that.m_nTotalTime = that.aTotalTime / that.scale;
 
@@ -979,18 +982,9 @@
       that.konva.layer.draw();
 
       //改变滚动条的宽度和位置
-      if (that.scale >= 128) {
-        var real_x, real_w, current_w, current_x;
-        current_w = that.containerWidth / 128;
-        real_w = that.m_nTotalTime / that.aTotalTime * that.containerWidth;
-        real_x = that.m_nBeginTime / that.aTotalTime * that.containerWidth;
-        current_x = real_x - (current_w - real_w) / (that.containerWidth - current_w) * real_x
-        $('#timescale-scroll-bar').attr('style', 'width:'+current_w+'px;left:'+current_x+'px');
-      } else {
-        var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
-        var width = that.m_nTotalTime / that.aTotalTime * 100;
-        $('#timescale-scroll-bar').attr('style', 'width:'+width+'%;left:'+startPosition+'%');
-      }
+      var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
+      var width = that.m_nTotalTime / that.aTotalTime * 100;
+      $('#timescale-scroll-bar').attr('style', 'width:'+width+'%;left:'+startPosition+'%');
     });
 
     //缩小按钮
@@ -1022,18 +1016,9 @@
       that.konva.layer.draw();
 
       //改变滚动条的宽度和位置
-      if (that.scale >= 128) {
-        var real_x, real_w, current_w, current_x;
-        current_w = that.containerWidth / 128;
-        real_w = that.m_nTotalTime / that.aTotalTime * that.containerWidth;
-        real_x = that.m_nBeginTime / that.aTotalTime * that.containerWidth;
-        current_x = real_x - (current_w - real_w) / (that.containerWidth - current_w) * real_x
-        $('#timescale-scroll-bar').attr('style', 'width:'+current_w+'px;left:'+current_x+'px');
-      } else {
-        var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
-        var width = that.m_nTotalTime / that.aTotalTime * 100;
-        $('#timescale-scroll-bar').attr('style', 'width:'+width+'%;left:'+startPosition+'%');
-      }
+      var startPosition = that.m_nBeginTime / that.aTotalTime * 100;
+      var width = that.m_nTotalTime / that.aTotalTime * 100;
+      $('#timescale-scroll-bar').attr('style', 'width:'+width+'%;left:'+startPosition+'%');
     });
 
     //滚动条拖拽事件
@@ -1051,16 +1036,7 @@
       }
 
       //调整时间轴的开始时间
-      if (that.scale >= 128) {
-        var real_x, real_w, current_w, current_x;
-        current_w = that.containerWidth / 128;
-        real_w = that.containerWidth / that.scale;
-        current_x = scroll_left / 100 * that.containerWidth;
-        real_x = current_x / (1 - (current_w - real_w) / (that.containerWidth - current_w));
-        that.m_nBeginTime = real_x / that.containerWidth * that.aTotalTime;
-      } else {
-        that.m_nBeginTime = that.aTotalTime * scroll_left / 100;
-      }
+      that.m_nBeginTime = that.aTotalTime * scroll_left / 100;
       that.konva.layer.removeChildren();
       that.drawLineF(that.konva.layer);
       if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
@@ -1109,7 +1085,7 @@
         that.emit('delIndex', that.absToRel(that.indexArr[index]));
         delIndexArr.push(Number(index));
       }
-      if (that.konva.delClipEle.lenght > 0) {
+      if (that.konva.delClipEle.length > 0) {
         that.clippedArr = that.clippedArr.filter(function(currentValue, index) {
           return delClipArr.indexOf(index) === -1;
         });
