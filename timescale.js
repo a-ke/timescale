@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 10:43:15
+ * @Last Modified time: 2018-11-22 10:54:16
  */
 ;(function() {
   var ready = {
@@ -551,7 +551,7 @@
       this.currentTime = this.aTotalTime;
       return;
     }
-    $('#timeScale .current-time').html($.msToHMS(currentTime));
+    $('.timescale .current-time').html($.msToHMS(currentTime));
 
     if (this.arrow) {
       this.arrow.remove();
