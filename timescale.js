@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 10:54:16
+ * @Last Modified time: 2018-11-22 13:34:06
  */
 ;(function() {
   var ready = {
@@ -1056,6 +1056,24 @@
     $(document).on('mouseup', function(e) {
       // $(this).off('mousemove', mousemove);
       document.onmousemove = null;
+    });
+
+    //滚动条点击事件
+    $('.timescale .timescale-scroll-draggerRail').on('click', function(e) {
+      var start_x = e.clientX - e.currentTarget.getBoundingClientRect().left;
+      var bar_w = parseFloat(ready.getStyle($('#timescale-scroll-bar')[0], 'width'));
+      if (start_x >= that.containerWidth - bar_w) {
+        start_x = that.containerWidth - bar_w;
+      }
+      that.m_nBeginTime = start_x / that.containerWidth * that.aTotalTime;
+      that.konva.layer.removeChildren();
+      that.drawLineF(that.konva.layer);
+      if(that.config.showSectionStatus)that.drawNoVideoBlock(that.konva.layer);
+      that.drawIndex(that.konva.layer);
+      that.drawCursor(that.konva.layer);
+      that.drawClipBlock(that.konva.layer);
+      that.konva.layer.batchDraw();
+      $('#timescale-scroll-bar').css('left', start_x / that.containerWidth * 100 + '%');
     });
 
     //入点点击事件
