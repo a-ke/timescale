@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 13:56:03
+ * @Last Modified time: 2018-11-22 13:59:41
  */
 ;(function() {
   var ready = {
@@ -1334,7 +1334,7 @@
       var total = 0;
       var sectionArr = that.config.sectionArr;
       for(var i = 0, len = sectionArr.length; i < len; i++) {
-        if (id === sectionArr[i].id) {
+        if (id == sectionArr[i].id) {
           total += time;
           break;
         } else {
