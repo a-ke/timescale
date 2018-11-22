@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 13:37:06
+ * @Last Modified time: 2018-11-22 13:50:21
  */
 ;(function() {
   var ready = {
@@ -1523,11 +1523,14 @@
     </div>"
     var totalSrc = operation + main + foot;
 
-    //自定义颜色导入
-    var style = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = ".timescale{border-color:"+iconColor+"}.timescale-operation{background-color:"+backgroundColor+"}.timescale-operation .iconfont{color:"+iconColor+"}.timescale-operation .timescale-timeshow>span{color:"+fontColor+"}.timescale-operation .timescale-timeshow .current-time,.timescale-operation .timescale-timeshow .total-time{border-color:"+iconColor+";-webkit-box-shadow: 0 0 5px 1px "+iconColor+" inset;-moz-box-shadow: 0 0 5px 1px "+iconColor+" inset;box-shadow: 0 0 5px 1px "+iconColor+" inset;}.timescale-operation .timescale-operation-group{border-color:"+iconColor+"}#timescale-scroll-bar{background-color:"+iconColor+"}#timescale-main{border-color:"+iconColor+"}.timescale-operation .timescale-operation-group span:hover{-webkit-box-shadow: 0 0 10px 1px "+iconColor+" inset;-moz-box-shadow: 0 0 10px 1px "+iconColor+" inset;box-shadow: 0 0 10px 1px "+iconColor+" inset;}";
-    $(document.head).append(style);
+    if ($('#timescale-css').length == 0) {
+      //自定义颜色导入
+      var style = document.createElement('style');
+      style.type = 'text/css';
+      style.id = 'timescale-css';
+      style.innerHTML = ".timescale{border-color:"+iconColor+"}.timescale-operation{background-color:"+backgroundColor+"}.timescale-operation .iconfont{color:"+iconColor+"}.timescale-operation .timescale-timeshow>span{color:"+fontColor+"}.timescale-operation .timescale-timeshow .current-time,.timescale-operation .timescale-timeshow .total-time{border-color:"+iconColor+";-webkit-box-shadow: 0 0 5px 1px "+iconColor+" inset;-moz-box-shadow: 0 0 5px 1px "+iconColor+" inset;box-shadow: 0 0 5px 1px "+iconColor+" inset;}.timescale-operation .timescale-operation-group{border-color:"+iconColor+"}#timescale-scroll-bar{background-color:"+iconColor+"}#timescale-main{border-color:"+iconColor+"}.timescale-operation .timescale-operation-group span:hover{-webkit-box-shadow: 0 0 10px 1px "+iconColor+" inset;-moz-box-shadow: 0 0 10px 1px "+iconColor+" inset;box-shadow: 0 0 10px 1px "+iconColor+" inset;}";
+      $(document.head).append(style);
+    }
 
     $(ele).addClass('timescale');
     $(ele).html(totalSrc);
