@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 14:35:26
+ * @Last Modified time: 2018-11-22 14:51:15
  */
 ;(function() {
   var ready = {
@@ -1059,7 +1059,7 @@
     });
 
     //滚动条点击事件
-    $('.timescale .timescale-scroll-draggerRail').on('click', function(e) {
+    $('.timescale .timescale-scroll-mouse-zoom').on('click', function(e) {
       var start_x = e.clientX - e.currentTarget.getBoundingClientRect().left;
       var bar_w = parseFloat(ready.getStyle($('#timescale-scroll-bar')[0], 'width'));
       if (start_x >= that.containerWidth - bar_w) {
@@ -1521,6 +1521,7 @@
     var foot = "<div id='timescale-scroll'>\
       <div id='timescale-scroll-bar'></div>\
       <div class='timescale-scroll-draggerRail'></div>\
+      <div class='timescale-scroll-mouse-zoom'></div>\
     </div>"
     var totalSrc = operation + main + foot;
 
