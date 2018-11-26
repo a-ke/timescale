@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 14:51:15
+ * @Last Modified time: 2018-11-26 13:53:36
  */
 ;(function() {
   var ready = {
@@ -1120,13 +1120,22 @@
       that.konva.delIndexEle = [];
     });
 
-    //剪辑按钮事件
-    $('#timescale-clip').on('click', function() {
+    //保存按钮事件
+    $('#timescale-save').on('click', function() {
       var clipsArr = [], clippedArr = [];
       clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
       clippedArr = that.findVideoSection(that.clippedArr);
       
-      that.emit('clip', clipsArr, clippedArr);
+      that.emit('save', clipsArr, clippedArr);
+    });
+
+    //另存按钮事件
+    $('#timescale-save-as').on('click', function() {
+      var clipsArr = [], clippedArr = [];
+      clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
+      clippedArr = that.findVideoSection(that.clippedArr);
+      
+      that.emit('saveAs', clipsArr, clippedArr);
     });
 
     //创建索引事件
@@ -1508,7 +1517,8 @@
         + (that.config.clipEnable ?
         "<span title='入点' id='timescale-clip-start'><i class='iconfont icon-rudian'></i></span>\
         <span title='出点' id='timescale-clip-end'><i class='iconfont icon-chudian'></i></span>\
-        <span title='剪辑' id='timescale-clip'><i class='iconfont icon-jianqie'></i></span>" : "") 
+        <span title='保存' id='timescale-save'><i class='iconfont icon-baocun'></i></span>\
+        <span title='另存' id='timescale-save-as'><i class='iconfont icon-lingcun'></i></span>" : "") 
         +(that.config.indexEnable ? "<span title='创建索引' id='timescale-index'><i class='iconfont icon-I'></i></span>" : "") +
         "<span title='删除' id='timescale-del'><i class='iconfont icon-delete'></i></span>\
       </div>" : "") +

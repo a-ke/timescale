@@ -64,7 +64,11 @@
     timeScale.on('pause', function() {
       console.log('pause')
     })
-    timeScale.on('clip', function(clipsArr, clippedArr) {
+    timeScale.on('save', function(clipsArr, clippedArr) {
+      console.log(clipsArr);
+      console.log(clippedArr)
+    });
+    timeScale.on('saveAs', function(clipsArr, clippedArr) {
       console.log(clipsArr);
       console.log(clippedArr)
     });
