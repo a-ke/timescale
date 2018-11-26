@@ -117,7 +117,7 @@ timeLine.on('save', function(clipsArr, clippedArr) {
 ```
 4. 另存事件
 ```js
-timeLine.on('saveas', function(clipsArr, clippedArr) {
+timeLine.on('saveAs', function(clipsArr, clippedArr) {
   console.log(clipsArr); //需要保存的视频片段
   console.log(clippedArr); //需要删除的视频片段
 });
