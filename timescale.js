@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-26 13:53:36
+ * @Last Modified time: 2018-11-26 14:25:41
  */
 ;(function() {
   var ready = {
@@ -1509,9 +1509,8 @@
         <span>总时长：<span class='total-time'>00:00:00</span></span>\
       </div>\
       <div class='timescale-operation-group'>\
-        <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>"
-        +(that.config.clipEnable ? "<span title='预览' id='timescale-preview'><i class='iconfont icon-yulan'></i></span>" : "") + 
-      "</div>"
+        <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>\
+      </div>"
       + (that.config.clipEnable || that.config.indexEnable ? 
       "<div class='timescale-operation-group'>"
         + (that.config.clipEnable ?
