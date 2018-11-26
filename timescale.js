@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-26 14:25:41
+ * @Last Modified time: 2018-11-26 14:33:09
  */
 ;(function() {
   var ready = {
@@ -1090,8 +1090,8 @@
       that.konva.layer.draw();
     });
 
-    //删除选中剪辑片段
-    $('#timescale-del').on('click', function() {
+    //取消选中剪辑片段
+    $('#timescale-cancel').on('click', function() {
       var index = 0;
       var delClipArr = [], delIndexArr = [];
       for (var i = 0, len = that.konva.delClipEle.length; i < len; i++) {
@@ -1519,7 +1519,7 @@
         <span title='保存' id='timescale-save'><i class='iconfont icon-baocun'></i></span>\
         <span title='另存' id='timescale-save-as'><i class='iconfont icon-lingcun'></i></span>" : "") 
         +(that.config.indexEnable ? "<span title='创建索引' id='timescale-index'><i class='iconfont icon-I'></i></span>" : "") +
-        "<span title='删除' id='timescale-del'><i class='iconfont icon-delete'></i></span>\
+        "<span title='取消选中' id='timescale-cancel'><i class='iconfont icon-quxiao'></i></span>\
       </div>" : "") +
       "<div class='timescale-operation-group'>\
         <span title='放大' id='timescale-zoomIn'><i class='iconfont icon-fangda'></i></span>\
