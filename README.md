@@ -111,18 +111,25 @@ timeLine.on('pause', function() {
 3. 保存事件
 ```js
 timeLine.on('save', function(clipsArr, clippedArr) {
-  console.log(clipsArr); //需要保存的视频片段
-  console.log(clippedArr); //需要删除的视频片段
+  console.log(clipsArr); //未选中的视频片段
+  console.log(clippedArr); //选中的视频片段
 });
 ```
 4. 另存事件
 ```js
 timeLine.on('saveAs', function(clipsArr, clippedArr) {
-  console.log(clipsArr); //需要保存的视频片段
-  console.log(clippedArr); //需要删除的视频片段
+  console.log(clipsArr); //未选中的视频片段
+  console.log(clippedArr); //选中的视频片段
 });
 ```
-5. 单击移动游标事件
+5. 删除事件
+```js
+timeLine.on('delete', function(clipsArr, clippedArr) {
+  console.log(clipsArr); //未选中的视频片段
+  console.log(clippedArr); //选中的视频片段
+});
+```
+6. 单击移动游标事件
 ```js
 timeLine.on('seekTo', function(time) {
   console.log(time); //游标移动之后的时间
@@ -135,14 +142,14 @@ timeLine.on('seekTo', function(time) {
   */
 })
 ```
-6. 预览事件
+7. 预览事件
 ```js
 timeLine.on('previewStart', function(clipsArr, clippedArr) {
   console.log(clipsArr); //当前需要保存的视频片段
   console.log(clippedArr); //当前剪辑掉的视频片段
 });
 ```
-7. 索引创建事件
+8. 索引创建事件
 ```js
 timeLine.on('createIndex', function(time) {
   console.log(time); // 所创建的索引信息
@@ -155,7 +162,7 @@ timeLine.on('createIndex', function(time) {
   */
 })
 ```
-8. 索引删除事件
+9. 索引删除事件
 ```js
 timeLine.on('delIndex', function(time) {
   console.log(time); //删除的索引信息
