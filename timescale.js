@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-22 14:51:15
+ * @Last Modified time: 2018-11-28 09:24:04
  */
 ;(function() {
   var ready = {
@@ -1321,6 +1321,7 @@
       that.konva.delClipEle = [];
       that.konva.delIndexEle = [];
       that.scale = 1;
+      that.config.sectionArr = sectionArr;
       $('#timescale-scroll-bar').css('width', '100%').css('left', '0');
       $('#timescale-play').find('.iconfont').removeClass('icon-zanting').addClass('icon-bofang');
       $('#timescale-preview').find('.iconfont').removeClass('icon-zanting').addClass('icon-yulan');
