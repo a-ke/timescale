@@ -921,14 +921,14 @@
     //播放按钮
     $('#timescale-play').on('click', function(e) {
       var $iconfont = $(e.currentTarget).find('.iconfont');
-      if ($iconfont.hasClass('icon-bofang')) {
-        $('#timescale-preview').find('.iconfont').removeClass('icon-zanting').addClass('icon-yulan');
-        $iconfont.removeClass('icon-bofang');
-        $iconfont.addClass('icon-zanting');
+      if ($iconfont.hasClass('icon-timescale-bofang')) {
+        $('#timescale-preview').find('.iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-yulan');
+        $iconfont.removeClass('icon-timescale-bofang');
+        $iconfont.addClass('icon-timescale-zanting');
         that.emit('play');
       } else {
-        $iconfont.removeClass('icon-zanting');
-        $iconfont.addClass('icon-bofang');
+        $iconfont.removeClass('icon-timescale-zanting');
+        $iconfont.addClass('icon-timescale-bofang');
         that.emit('pause');
       }
     });
@@ -937,16 +937,16 @@
     $('#timescale-preview').on('click', function(e) {
       var clipsArr = [], clippedArr = [];
       var $iconfont = $(e.currentTarget).find('.iconfont');
-      if ($iconfont.hasClass('icon-yulan')) {
-        $('#timescale-play').find('.iconfont').removeClass('icon-zanting').addClass('icon-bofang');
-        $iconfont.removeClass('icon-yulan');
-        $iconfont.addClass('icon-zanting');
+      if ($iconfont.hasClass('icon-timescale-yulan')) {
+        $('#timescale-play').find('.iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-bofang');
+        $iconfont.removeClass('icon-timescale-yulan');
+        $iconfont.addClass('icon-timescale-zanting');
         clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
         clippedArr = that.findVideoSection(that.clippedArr);
         that.emit('previewStart', clipsArr, clippedArr);
       } else {
-        $iconfont.removeClass('icon-zanting');
-        $iconfont.addClass('icon-yulan');
+        $iconfont.removeClass('icon-timescale-zanting');
+        $iconfont.addClass('icon-timescale-yulan');
         that.emit('previewStop');
       }
     });
@@ -1323,8 +1323,8 @@
       that.scale = 1;
       that.config.sectionArr = sectionArr;
       $('#timescale-scroll-bar').css('width', '100%').css('left', '0');
-      $('#timescale-play').find('.iconfont').removeClass('icon-zanting').addClass('icon-bofang');
-      $('#timescale-preview').find('.iconfont').removeClass('icon-zanting').addClass('icon-yulan');
+      $('#timescale-play').find('.iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-bofang');
+      $('#timescale-preview').find('.iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-yulan');
       that.timelineLoad(sectionArr, clipsArr);
     });
   }
@@ -1351,14 +1351,14 @@
   //播放
   Class.prototype.play = function() {
     this.wait(function() {
-      $('#timescale-play .iconfont').removeClass('icon-bofang').addClass('icon-zanting');
+      $('#timescale-play .iconfont').removeClass('icon-timescale-bofang').addClass('icon-timescale-zanting');
     });
   };
 
   //暂停
   Class.prototype.pause = function() {
     this.wait(function() {
-      $('#timescale-play .iconfont').removeClass('icon-zanting').addClass('icon-bofang');
+      $('#timescale-play .iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-bofang');
     });
   };
 
@@ -1501,21 +1501,21 @@
         <span>总时长：<span class='total-time'>00:00:00</span></span>\
       </div>\
       <div class='timescale-operation-group'>\
-        <span title='播放' id='timescale-play'><i class='iconfont icon-bofang'></i></span>"
-        +(that.config.clipEnable ? "<span title='预览' id='timescale-preview'><i class='iconfont icon-yulan'></i></span>" : "") + 
+        <span title='播放' id='timescale-play'><i class='iconfont icon-timescale-bofang'></i></span>"
+        +(that.config.clipEnable ? "<span title='预览' id='timescale-preview'><i class='iconfont icon-timescale-yulan'></i></span>" : "") + 
       "</div>"
       + (that.config.clipEnable || that.config.indexEnable ? 
       "<div class='timescale-operation-group'>"
         + (that.config.clipEnable ?
-        "<span title='入点' id='timescale-clip-start'><i class='iconfont icon-rudian'></i></span>\
-        <span title='出点' id='timescale-clip-end'><i class='iconfont icon-chudian'></i></span>\
-        <span title='剪辑' id='timescale-clip'><i class='iconfont icon-jianqie'></i></span>" : "") 
-        +(that.config.indexEnable ? "<span title='创建索引' id='timescale-index'><i class='iconfont icon-I'></i></span>" : "") +
-        "<span title='删除' id='timescale-del'><i class='iconfont icon-delete'></i></span>\
+        "<span title='入点' id='timescale-clip-start'><i class='iconfont icon-timescale-rudian'></i></span>\
+        <span title='出点' id='timescale-clip-end'><i class='iconfont icon-timescale-chudian'></i></span>\
+        <span title='剪辑' id='timescale-clip'><i class='iconfont icon-timescale-jianqie'></i></span>" : "") 
+        +(that.config.indexEnable ? "<span title='创建索引' id='timescale-index'><i class='iconfont icon-timescale-I'></i></span>" : "") +
+        "<span title='删除' id='timescale-del'><i class='iconfont icon-timescale-delete'></i></span>\
       </div>" : "") +
       "<div class='timescale-operation-group'>\
-        <span title='放大' id='timescale-zoomIn'><i class='iconfont icon-fangda'></i></span>\
-        <span title='缩小' id='timescale-zoomOut'><i class='iconfont icon-suoxiao'></i></span>\
+        <span title='放大' id='timescale-zoomIn'><i class='iconfont icon-timescale-fangda'></i></span>\
+        <span title='缩小' id='timescale-zoomOut'><i class='iconfont icon-timescale-suoxiao'></i></span>\
       </div>\
     </div>";
     var main = "<div id='timescale-main'></div>";
