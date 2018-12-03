@@ -3,7 +3,7 @@
  * @Author: a-ke 
  * @Date: 2018-10-29 11:02:43 
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-11-28 09:24:04
+ * @Last Modified time: 2018-12-03 13:41:32
  */
 ;(function() {
   var ready = {
@@ -1314,6 +1314,7 @@
     var that = this;
     this.wait(function() {
       that.currentTime = 0;
+      that.m_nBeginTime = 0;
       that.clippedArr = [];
       that.indexArr = [];
       that.konva.layer.removeChildren();
