@@ -3,7 +3,7 @@
  * @Author: a-ke
  * @Date: 2018-10-29 11:02:43
  * @Last Modified by: a-ke
- * @Last Modified time: 2018-12-03 13:41:32
+ * @Last Modified time: 2019-05-13 10:37:50
  */
 ;(function() {
   var ready = {
@@ -130,6 +130,8 @@
       seekTo: that.seekTo.bind(that),
       play: that.play.bind(that),
       pause: that.pause.bind(that),
+      previewPlay: that.previewPlay.bind(that),
+      previewPause: that.previewPause.bind(that),
       createIndex: that.createIndex.bind(that),
       on: that.on.bind(that),
       off: that.off.bind(that)
@@ -1351,7 +1353,11 @@
 
   //播放
   Class.prototype.play = function() {
+    var that = this;
     this.wait(function() {
+      if ($('#timescale-preview .icon-timescale-zanting').length > 0) {
+        that.previewPause();
+      }
       $('#timescale-play .iconfont').removeClass('icon-timescale-bofang').addClass('icon-timescale-zanting');
     });
   };
@@ -1362,6 +1368,24 @@
       $('#timescale-play .iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-bofang');
     });
   };
+
+  //预览播放
+  Class.prototype.previewPlay = function() {
+    var that = this;
+    this.wait(function() {
+      if ($('#timescale-play .icon-timescale-zanting').length > 0) {
+        that.pause();
+      }
+      $('#timescale-preview .iconfont').removeClass('icon-timescale-yulan').addClass('icon-timescale-zanting');
+    });
+  }
+
+  //预览暂停
+  Class.prototype.previewPause = function() {
+    this.wait(function() {
+      $('#timescale-preview .iconfont').removeClass('icon-timescale-zanting').addClass('icon-timescale-yulan');
+    });
+  }
 
   //添加索引
   Class.prototype.createIndex = function(id, time) {
@@ -1395,11 +1419,6 @@
   }
 
   /******** 插件暴露在外的方法 end ***********/
-
-  /********** 插件暴露在外的事件回调 start ************/
-
-
-  /********** 插件暴露在外的事件回调 end ************/
 
   Class.prototype.init = function() {
     var that = this;

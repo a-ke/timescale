@@ -20,7 +20,8 @@
 <body>
   <div id="timeScale"></div>
   <!-- <script src="https://cdn.bootcss.com/konva/2.5.0/konva.min.js"></script> -->
-  <script src="./timescale.min.js"></script>
+  <!-- <script src="./timescale.min.js"></script> -->
+  <script src="./timescale.js"></script>
   <script type="text/javascript">
     // var timeScale = new TimeScale("timeScale");
     var sectionArr = [{
@@ -50,7 +51,7 @@
       // iconColor: '#333'
     });
     // console.log(timeScale)
-    // timeScale.play();
+    timeScale.play();
     var time = 2000;
     timeScale.seekTo(1, time);
     // setInterval(function() {
@@ -86,8 +87,12 @@
     })
 
     setTimeout(function() {
-      timeScale.reload([{id:1, duration: 10000}], [{startTime: 0, endTime: 4000}]);
+      // timeScale.reload([{id:1, duration: 10000}], [{startTime: 0, endTime: 4000}]);
+      timeScale.previewPlay();
     }, 3000);
+    setTimeout(function() {
+      timeScale.play();
+    }, 4000);
   </script>
 </body>
 </html>
