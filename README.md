@@ -84,15 +84,19 @@ cursorColor | 插件游标的颜色 | string | '#FF6600' | 否
 控制插件工具条上的播放按钮切换为播放状态
 2. timeLine.pause()   
 控制插件工具条上的暂停按钮切换为暂停状态
-3. timeLine.seekTo(id, time)   
+3. timeLine.previewPlay()   
+控制插件工具条上的预览按钮切换为播放状态
+4. timeLine.previewPause()   
+控制插件工具条上的预览按钮切换为暂停状态
+5. timeLine.seekTo(id, time)   
 控制游标移动到指定视频的指定时间，id为要跳转到的视频id，time为要跳转到的时间，单位为毫秒
-4. timeLine.createIndex(id, time)      
+6. timeLine.createIndex(id, time)      
 创建索引。id为视频的唯一标识，time 为要创建的索引时间。
-5. timeLine.on(event, callback)   
+7. timeLine.on(event, callback)   
 注册相应的监听事件
-6. timeLine.off(event, callback)   
+8. timeLine.off(event, callback)   
 移除相应的监听事件
-7. timeLine.reload(sectionArr, clipsArr)    
+9. timeLine.reload(sectionArr, clipsArr)    
 重新加载时间轴，sectionArr为视频片段的信息，clipsArr为剪辑后片段的信息
 
 ## 插件事件监听
