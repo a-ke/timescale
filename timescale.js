@@ -3,7 +3,7 @@
  * @Author: a-ke
  * @Date: 2018-10-29 11:02:43
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-05-13 10:37:50
+ * @Last Modified time: 2019-05-13 15:16:00
  */
 ;(function() {
   var ready = {
@@ -1323,6 +1323,7 @@
       that.konva.staticLayer.removeChildren();
       that.konva.delClipEle = [];
       that.konva.delIndexEle = [];
+      that.maxScale = false;
       that.scale = 1;
       that.config.sectionArr = sectionArr;
       $('#timescale-scroll-bar').css('width', '100%').css('left', '0');
