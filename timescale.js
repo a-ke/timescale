@@ -1,7 +1,7 @@
 /*
  * @Name: TimeScale 时间轴插件
- * @Author: a-ke 
- * @Date: 2018-10-29 11:02:43 
+ * @Author: a-ke
+ * @Date: 2018-10-29 11:02:43
  * @Last Modified by: a-ke
  * @Last Modified time: 2018-12-03 13:38:10
  */
@@ -93,7 +93,7 @@
     v: '1.0.0',
     config: {}, //全局配置项
     path: !window.Konva ? ready.getPath : '',
-    
+
     //设置全局项
     set: function(options) {
       var that = this;
@@ -120,7 +120,7 @@
 
   //颜色值
   ,backgroundColor = '#141F39', fontColor = '#fff', iconColor = '#097DB1', cursorColor = '#FF6600'
-  
+
   //操作当前实例
   ,thisTimeScale = function() {
     var that = this;
@@ -142,7 +142,7 @@
     that.config = $.extend({}, that.config, timescale.config, options);
     backgroundColor = that.config.backgroundColor || backgroundColor;
     fontColor = that.config.fontColor || fontColor;
-    iconColor = that.config.fontColor || iconColor;
+    iconColor = that.config.iconColor || iconColor;
     cursorColor = that.config.cursorColor || cursorColor;
 
     //konva全局变量
@@ -179,10 +179,10 @@
   }
 
   //DOM查找
-  ,$ = function(selector){   
+  ,$ = function(selector){
     return new JQ(selector);
   }
-  
+
   //DOM构造器
   ,JQ = function(selector){
     var index = 0
@@ -199,7 +199,7 @@
   $.extend = function(){
     var ai = 1, args = arguments
     ,clone = function(target, obj){
-      target = target || (obj.constructor === Array ? [] : {}); 
+      target = target || (obj.constructor === Array ? [] : {});
       for(var i in obj){
         //如果值为对象，则进入递归，继续深度合并
         target[i] = (obj[i] && (obj[i].constructor === Object))
@@ -290,7 +290,7 @@
     });
     return str.replace(/^\s|\s$/, '');
   };
-  
+
   //移除值
   JQ.removeStr = function(str, new_str){
     str = str.replace(/\s+/, ' ');
@@ -303,13 +303,13 @@
     });
     return str.replace(/\s+/, ' ').replace(/^\s|\s$/, '');
   };
-  
+
   //查找子元素
   JQ.prototype.find = function(selector){
     var that = this;
     var index = 0, arr = []
     ,isObject = typeof selector === 'object';
-    
+
     this.each(function(i, item){
       var nativeDOM = isObject ? [selector] : item.querySelectorAll(selector || null);
       for(; index < nativeDOM.length; index++){
@@ -317,15 +317,15 @@
       }
       that.shift();
     });
-    
+
     if(!isObject){
       that.selector =  (that.selector ? that.selector + ' ' : '') + selector
     }
-    
+
     $.each(arr, function(i, item){
       that.push(item);
     });
-    
+
     return that;
   };
   //DOM遍历
@@ -369,46 +369,46 @@
       if(that.length > 0) return that[0].getAttribute(key);
     }() : that.each(function(index, item){
       item.setAttribute(key, value);
-    });   
+    });
   };
-  
+
   //移除属性
   JQ.prototype.removeAttr = function(key){
     return this.each(function(index, item){
       item.removeAttribute(key);
     });
   };
-  
+
   //设置HTML内容
   JQ.prototype.html = function(html){
     return this.each(function(index, item){
       item.innerHTML = html;
     });
   };
-  
+
   //设置值
   JQ.prototype.val = function(value){
     return this.each(function(index, item){
       item.value = value;
     });
   };
-  
+
   //追加内容
   JQ.prototype.append = function(elem){
     return this.each(function(index, item){
-      typeof elem === 'object' 
+      typeof elem === 'object'
         ? item.appendChild(elem)
       :  item.innerHTML = item.innerHTML + elem;
     });
   };
-  
+
   //移除内容
   JQ.prototype.remove = function(elem){
     return this.each(function(index, item){
       elem ? item.removeChild(elem) : item.parentNode.removeChild(item);
     });
   };
-  
+
   //事件绑定
   JQ.prototype.on = function(eventName, fn){
     return this.each(function(index, item){
@@ -418,12 +418,12 @@
       }) : item.addEventListener(eventName, fn, false);
     });
   };
-  
+
   //解除事件
   JQ.prototype.off = function(eventName, fn){
     return this.each(function(index, item){
-      item.detachEvent 
-        ? item.detachEvent('on'+ eventName, fn)  
+      item.detachEvent
+        ? item.detachEvent('on'+ eventName, fn)
       : item.removeEventListener(eventName, fn, false);
     });
   };
@@ -1125,7 +1125,7 @@
       var clipsArr = [], clippedArr = [];
       clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
       clippedArr = that.findVideoSection(that.clippedArr);
-      
+
       that.emit('save', clipsArr, clippedArr);
     });
 
@@ -1134,7 +1134,7 @@
       var clipsArr = [], clippedArr = [];
       clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
       clippedArr = that.findVideoSection(that.clippedArr);
-      
+
       that.emit('saveAs', clipsArr, clippedArr);
     });
 
@@ -1142,7 +1142,7 @@
       var clipsArr = [], clippedArr = [];
       clipsArr = that.findVideoSection(that.clippedReverse(that.clippedArr));
       clippedArr = that.findVideoSection(that.clippedArr);
-      
+
       that.emit('delete', clipsArr, clippedArr);
     });
 
@@ -1317,7 +1317,7 @@
       }
     }
   };
-  
+
   //等待插件初始化完毕
   Class.prototype.wait = function(fun) {
     var that = this;
@@ -1338,6 +1338,7 @@
       that.konva.staticLayer.removeChildren();
       that.konva.delClipEle = [];
       that.konva.delIndexEle = [];
+      that.maxScale = false;
       that.scale = 1;
       that.config.sectionArr = sectionArr;
       $('#timescale-scroll-bar').css('width', '100%').css('left', '0');
@@ -1425,7 +1426,7 @@
     that.eventInit();
   };
 
-  /** 
+  /**
    * @method timelineLoad
    * @desc 用来初始化视频剪辑控件
    * @param {string} sectionArr - [{id: 1, duration: 100000}]
@@ -1439,7 +1440,7 @@
     var ele = document.getElementById('timescale-main');
     var width = that.containerWidth = parseFloat(ready.getStyle(ele, 'width'));
     var height = that.containerHeight = parseFloat(ready.getStyle(ele, 'height'));
-    var totalTime = 0; 
+    var totalTime = 0;
 
     //计算总时间
     for (var i = 0, len = sectionArr.length; i < len; i++) {
@@ -1506,7 +1507,7 @@
     that.konva.layer.draw();
   };
 
-  /** 
+  /**
    * @method frameInit
    * @desc 时间轴框架初始化
    */
@@ -1521,14 +1522,14 @@
       <div class='timescale-operation-group'>\
         <span title='播放' id='timescale-play'><i class='iconfont icon-timescale-bofang'></i></span>\
       </div>"
-      + (that.config.clipEnable || that.config.indexEnable ? 
+      + (that.config.clipEnable || that.config.indexEnable ?
       "<div class='timescale-operation-group'>"
         + (that.config.clipEnable ?
         "<span title='入点' id='timescale-clip-start'><i class='iconfont icon-timescale-rudian'></i></span>\
         <span title='出点' id='timescale-clip-end'><i class='iconfont icon-timescale-chudian'></i></span>\
         <span title='保存' id='timescale-save'><i class='iconfont icon-timescale-baocun'></i></span>\
         <span title='另存' id='timescale-save-as'><i class='iconfont icon-timescale-lingcun'></i></span>\
-        <span title='删除' id='timescale-del'><i class='iconfont icon-timescale-delete'></i></span>" : "") 
+        <span title='删除' id='timescale-del'><i class='iconfont icon-timescale-delete'></i></span>" : "")
         +(that.config.indexEnable ? "<span title='创建索引' id='timescale-index'><i class='iconfont icon-timescale-I'></i></span>" : "") +
         "<span title='取消选中' id='timescale-cancel'><i class='iconfont icon-timescale-quxiao'></i></span>\
       </div>" : "") +
