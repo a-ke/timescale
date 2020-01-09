@@ -3,7 +3,7 @@
  * @Author: a-ke
  * @Date: 2018-10-29 11:02:43
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-05-13 15:16:00
+ * @Last Modified time: 2020-01-09 09:45:28
  */
 ;(function() {
   var ready = {
@@ -718,10 +718,18 @@
             mouse_end_x = e.clientX;
             var timeDiff = Math.round((mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime);
             var index = name.split('_')[1];
+            // 判断左右边界是否相交
             if (timeDiff + that.clippedArr[index].startTime >= that.clippedArr[index].endTime) {
               that.clippedArr[index].startTime = that.clippedArr[index].endTime;
             } else {
               that.clippedArr[index].startTime += timeDiff;
+            }
+
+            // 判断是否和相邻的剪辑区域是否相交，或者超出左边边界
+            if (index > 0 && timeDiff + that.clippedArr[index].startTime <= that.clippedArr[index - 1].endTime) {
+              that.clippedArr[index].startTime = that.clippedArr[index - 1].endTime;
+            } else if (index == 0 && timeDiff + that.clippedArr[index].startTime <= 0) {
+              that.clippedArr[index].startTime = 0;
             }
             that.drawClipBlock(that.konva.layer);
             that.konva.layer.batchDraw();
@@ -752,10 +760,18 @@
             mouse_end_x = e.clientX;
             var timeDiff = Math.round((mouse_end_x - mouse_start_x) / that.containerWidth * that.m_nTotalTime);
             var index = name.split('_')[1];
+            // 判断左右边界是否相交
             if (timeDiff + that.clippedArr[index].endTime <= that.clippedArr[index].startTime) {
               that.clippedArr[index].endTime = that.clippedArr[index].startTime;
             } else {
               that.clippedArr[index].endTime += timeDiff;
+            }
+
+            // 判断是否和相邻的剪辑区域是否相交，或者超出右边边界
+            if (index < that.clippedArr.length - 1 && timeDiff + that.clippedArr[index].endTime >= that.clippedArr[index + 1].startTime) {
+              that.clippedArr[index].endTime = that.clippedArr[index + 1].startTime;
+            } else if (index == that.clippedArr.length - 1 && timeDiff + that.clippedArr[index].endTime >= that.aTotalTime) {
+              that.clippedArr[index].endTime = that.aTotalTime;
             }
             that.drawClipBlock(that.konva.layer);
             that.konva.layer.batchDraw();
