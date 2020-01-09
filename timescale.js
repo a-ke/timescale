@@ -3,7 +3,7 @@
  * @Author: a-ke
  * @Date: 2018-10-29 11:02:43
  * @Last Modified by: a-ke
- * @Last Modified time: 2020-01-09 09:55:45
+ * @Last Modified time: 2020-01-09 10:40:16
  */
 ;(function() {
   var ready = {
@@ -724,8 +724,8 @@
             }
 
             // 判断是否和相邻的剪辑区域是否相交，或者超出左边边界
-            if (index > 0 && timeDiff + that.clippedArr[index].startTime <= that.clippedArr[index - 1].endTime) {
-              that.clippedArr[index].startTime = that.clippedArr[index - 1].endTime;
+            if (index > 0 && timeDiff + that.clippedArr[index].startTime <= that.clippedArr[Number(index) - 1].endTime) {
+              that.clippedArr[index].startTime = that.clippedArr[Number(index) - 1].endTime;
             } else if (index == 0 && timeDiff + that.clippedArr[index].startTime <= 0) {
               that.clippedArr[index].startTime = 0;
             }
@@ -766,8 +766,8 @@
             }
 
             // 判断是否和相邻的剪辑区域是否相交，或者超出右边边界
-            if (index < that.clippedArr.length - 1 && timeDiff + that.clippedArr[index].endTime >= that.clippedArr[index + 1].startTime) {
-              that.clippedArr[index].endTime = that.clippedArr[index + 1].startTime;
+            if (index < that.clippedArr.length - 1 && timeDiff + that.clippedArr[index].endTime >= that.clippedArr[Number(index) + 1].startTime) {
+              that.clippedArr[index].endTime = that.clippedArr[Number(index) + 1].startTime;
             } else if (index == that.clippedArr.length - 1 && timeDiff + that.clippedArr[index].endTime >= that.aTotalTime) {
               that.clippedArr[index].endTime = that.aTotalTime;
             }
