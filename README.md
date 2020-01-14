@@ -139,7 +139,13 @@ timeLine.on('previewStart', function(clipsArr, clippedArr) {
   console.log(clippedArr); //当前剪辑掉的视频片段
 });
 ```
-6. 索引创建事件
+6. 预览停止事件
+```js
+timeLine.on('previewStop', function() {
+  console.log('previewStop');
+});
+```
+7. 索引创建事件
 ```js
 timeLine.on('createIndex', function(time) {
   console.log(time); // 所创建的索引信息
@@ -152,7 +158,7 @@ timeLine.on('createIndex', function(time) {
   */
 })
 ```
-7. 索引删除事件
+8. 索引删除事件
 ```js
 timeLine.on('delIndex', function(time) {
   console.log(time); //删除的索引信息
