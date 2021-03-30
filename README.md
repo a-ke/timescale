@@ -2,6 +2,9 @@
 
 >作者：a-ke
 
+## 预览地址
+https://a-ke.github.io/timescale/
+
 ## 安装说明
 1. 使用script引入   
 将此文件夹放到静态目录下，在html文件中引入TimeScale.js即可。例如
