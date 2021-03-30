@@ -3,7 +3,7 @@
 >作者：a-ke
 
 ## 预览地址
-https://a-ke.github.io/timescale/
+https://a-ke.github.io/timescale/demo.html
 
 ## 安装说明
 1. 使用script引入   
